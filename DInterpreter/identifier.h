@@ -1,9 +1,3 @@
-/*
-   Klasse: identifier
-   Basisklasse: token
-   Namensraum: inter
-   Beschreibung: Beschreibt Textsymbole (ID,Keywords)
-*/
 #pragma once
 
 #include "token.h"
@@ -12,15 +6,14 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace inter
+namespace cscript
 {
 
-
-class identifier : public token
+class Identifier : public Token
 {
 public:
-	identifier(char c);
-	virtual ~identifier(void);
+	Identifier(char c);
+	virtual ~Identifier(void);
 	void				append(char n);
 	char*				get(){return buffer;}
 	void				checkkeyword();
@@ -30,4 +23,4 @@ private:
 	int		position;
 };
 
-} // namespace
+}

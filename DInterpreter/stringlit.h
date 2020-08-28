@@ -1,22 +1,16 @@
-/*
-   Klasse: stringlit
-   Basisklasse: token
-   Namensraum: inter
-   Beschreibung: Beschreibt Stringliteral(STRING)
-*/
 #pragma once
 
 #include "token.h"
 #include "symbols.h"
 
-namespace inter
+namespace cscript
 {
 
-class stringlit : public token
+class Stringlit : public Token
 {
 public:
-	stringlit(void);
-	virtual ~stringlit(void);
+	Stringlit(void);
+	virtual ~Stringlit(void);
 	void				append(char n);
 	char*				get(){return buffer;}
 	virtual const char*	tostring(){return (const char*)get();}
@@ -25,4 +19,4 @@ private:
 	int		position;
 };
 
-} // namespace
+}

@@ -1,23 +1,17 @@
-/*
-   Klasse: real
-   Basisklasse: token
-   Namensraum: inter
-   Beschreibung: Beschreibt Realliterale(REALLIT)
-*/
 #pragma once
 
 #include "token.h"
 #include "symbols.h"
 #include <string>
 
-namespace inter
+namespace cscript
 {
 
-class real : public token
+class Real : public Token
 {
 public:
-	real(REALNUM v);
-	virtual ~real(void){};
+	Real(REALNUM v);
+	virtual ~Real(void){};
 	void				setvalue(REALNUM v){value = v;}
 	REALNUM				getvalue(){return value;}
 	virtual const char*	tostring();
@@ -25,4 +19,4 @@ private:
 	REALNUM value;
 };
 
-} // namespace
+}

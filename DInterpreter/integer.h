@@ -1,23 +1,17 @@
-/*
-   Klasse: integer
-   Basisklasse: token
-   Namensraum: inter
-   Beschreibung: Beschreibt Integerliterale(INT)
-*/
 #pragma once
 
 #include "token.h"
 #include <cstdlib>
 #include <cstdio>
 
-namespace inter
+namespace cscript
 {
 
-class integer : public token
+class Integer : public Token
 {
 public:
-	integer(int v);
-	virtual ~integer(void){};
+	Integer(int v);
+	virtual ~Integer(void){};
 	void				setvalue(int v){value = v;}
 	int					getvalue(){return value;}
 	virtual const char* tostring();
@@ -25,4 +19,4 @@ private:
 	int value;
 };
 
-} // namespace
+}

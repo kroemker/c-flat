@@ -1,9 +1,9 @@
 #include "identifier.h"
 
-namespace inter
+namespace cscript
 {
 
-identifier::identifier(char c) : token(ttypes::ID)
+Identifier::Identifier(char c) : Token(ttypes::ID)
 {
 	position = 1;
 	buffer = NULL;
@@ -12,21 +12,21 @@ identifier::identifier(char c) : token(ttypes::ID)
 	buffer[1] = '\0';
 }
 
-identifier::~identifier(void)
+Identifier::~Identifier(void)
 {
 	if(buffer)
 		delete buffer;
 	buffer = NULL;
 }
 
-void identifier::append(char n)
+void Identifier::append(char n)
 {
-	buffer[position] = n; // keine überprüfung auf arraygrenzen 
+	buffer[position] = n;
 	buffer[position+1] = '\0';
 	position++;
 }
 
-void identifier::checkkeyword()
+void Identifier::checkkeyword()
 {
 	int i;
 	for(i = 0; i < KEYWORDCOUNT; i++)
@@ -37,4 +37,4 @@ void identifier::checkkeyword()
 		}
 }
 
-} // namespace
+}

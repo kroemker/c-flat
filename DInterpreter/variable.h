@@ -1,32 +1,27 @@
-/*
-   Klasse: variable
-   Namensraum: inter
-   Beschreibung: Stellt eine Variable dar
-*/
 #pragma once
 
 #include "symbols.h"
 
-namespace inter
+namespace cscript
 {
 
-class variable
+class Variable
 {
 public:
-	variable(int t,char* n);
-	virtual ~variable(void);
+	Variable(int t,char* n);
+	virtual ~Variable(void);
 	bool    getbval();
 	int		getival();
 	REALNUM	getrval();
 	void	setval(bool b);
 	void	setval(int i);
 	void	setval(REALNUM r);
-	int		gettype(){return type;}
-	char*	getname(){return name;}
+	int		gettype() { return type; }
+	char*	getname() { return name; }
 private:
-	char*	 name; // Quellname
-	void*	 val;  // Wert
-	int		 type; // Datentyp 
+	char*	 name;
+	void*	 val;
+	int		 type; 
 };
 
-} // namespace
+}

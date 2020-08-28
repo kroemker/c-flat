@@ -1,66 +1,61 @@
 #include "variable.h"
 
-namespace inter
+namespace cscript
 {
 
-variable::variable(int t,char* n) : name(n),type(t)
+Variable::Variable(int t,char* n) : name(n),type(t)
 {
 	if(t == tresult::RES_BOOLEAN)
 	{
-		val = new bool; // 1 byte: 8 bit
+		val = new bool;
 	}
 	else if(t == tresult::RES_INTEGER)
 	{
-		val = new int; // 4 byte: 32 bit
+		val = new int;
 	}
 	else if(t == tresult::RES_REAL)
 	{
-		val = new REALNUM; // 4/8 byte: 32/64 bit
+		val = new REALNUM;
 	}
 }
 
-variable::~variable(void)
+Variable::~Variable(void)
 {
 }
-
-// getval- Funktionen prüfen nicht auf Richtigkeit der Typen!
-bool variable::getbval()
+bool Variable::getbval()
 {
-	// Bitfolge in val neu interpretieren 
-	// und einem Pointer zuweisen
 	bool* b = reinterpret_cast<bool*>(val);
-	// Inhalt ausgeben
 	return *b;
 }
 
-int variable::getival()
+int Variable::getival()
 {
 	int* i = reinterpret_cast<int*>(val);
 	return *i;
 }
 
-REALNUM variable::getrval()
+REALNUM Variable::getrval()
 {
 	REALNUM* f= reinterpret_cast<REALNUM*>(val);
 	return *f;
 }
 
-void variable::setval(bool b)
+void Variable::setval(bool b)
 {
 	bool* k = reinterpret_cast<bool*>(val);
 	*k = b;
 }
 
-void variable::setval(REALNUM r)
+void Variable::setval(REALNUM r)
 {
 	REALNUM* k = reinterpret_cast<REALNUM*>(val);
 	*k = r;
 }
 
-void variable::setval(int i)
+void Variable::setval(int i)
 {
 	int* k = reinterpret_cast<int*>(val);
 	*k = i;
 }
 
-} // namespace
+}

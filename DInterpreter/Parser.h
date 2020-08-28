@@ -8,29 +8,29 @@
 #include "token.h"
 #include "exception.h"
 
-namespace inter
+namespace cscript
 {
 
-class Parser
-{
-public:
-	Parser(Lexer* pLex);
-	exception*	parsenext();
-	virtual ~Parser(void);
-private:
-	variable*					boolexpr();
-	variable*					joinexpr();
-	variable*					equalityexpr();
-	variable*					relexpr();
-	variable*					mathexpr(int numerictype,bool isboolexpr);
-	variable*					mathterm(int numerictype,bool isboolexpr);
-	variable*					mathunary(int numerictype,bool isboolexpr);
-	variable*					factor(int numerictype,bool isboolexpr);
-	void						stmts();
-	void						decl();
-	void						decls();
-	std::list<variable*>		variables;
-	Lexer*						pLexer;
-};
+	class Parser
+	{
+	public:
+		Parser(Lexer* pLex);
+		Exception*	parsenext();
+		virtual ~Parser(void);
+	private:
+		Variable*					boolexpr();
+		Variable*					joinexpr();
+		Variable*					equalityexpr();
+		Variable*					relexpr();
+		Variable*					mathexpr(int numerictype, bool isboolexpr);
+		Variable*					mathterm(int numerictype, bool isboolexpr);
+		Variable*					mathunary(int numerictype, bool isboolexpr);
+		Variable*					factor(int numerictype, bool isboolexpr);
+		void						stmts();
+		void						decl();
+		void						decls();
+		std::list<Variable*>		variables;
+		Lexer*						pLexer;
+	};
 
-} // namespace
+}

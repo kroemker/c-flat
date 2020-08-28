@@ -9,30 +9,31 @@
 #include "integer.h"
 #include "stringlit.h"
 
-namespace inter
+namespace cscript
 {
 
-class Lexer
-{
-public:
-	Lexer(unsigned char* stringstream);
-	virtual ~Lexer(void);
-	void	next() {if(tokenstream[streampos]->gettype() == ';')iexpr++; streampos++;}
-	void	prelex();
-	void	jumpto(int pos){streampos = pos;}
-	int		getexprnum(){return iexpr;}
-	int		getstreampos(){return streampos;}
-	token*  look(){return tokenstream[streampos];}
-	bool	endofstream(){return(tokenstream.size() == streampos);}
-	bool	isprelexed(){return prelexed;}
-private:
-	bool				isready(){return (sInputStream[iPosition] == '\0');}
-	token*				getnexttoken();
-	std::vector<token*>	tokenstream;
-	unsigned char*		sInputStream;
-	unsigned int		streampos;
-	unsigned int		iPosition;
-	unsigned int		iexpr;
-	bool				prelexed;
-};
-} // namespace
+	class Lexer
+	{
+	public:
+		Lexer(char* str, int len);
+		virtual ~Lexer(void);
+		void	next() { if (isEndOfTokenList()) return; if (tokens[tokenIndex]->gettype() == ';')numExpr++; tokenIndex++; }
+		void	prelex();
+		void	jump(int pos) { tokenIndex = pos; }
+		int		getExpressionCount() { return numExpr; }
+		int		getTokenIndex() { return tokenIndex; }
+		Token*  look() { return tokens[tokenIndex]; }
+		bool	isEndOfTokenList() { return(tokens.size() == tokenIndex); }
+		bool	isPrelexed() { return prelexed; }
+	private:
+		bool				isready() { return inputIndex == inputLength; }
+		Token*				getnexttoken();
+		std::vector<Token*>	tokens;
+		char*				input;
+		unsigned int		tokenIndex;
+		unsigned int		inputIndex;
+		unsigned int		numExpr;
+		bool				prelexed;
+		int					inputLength;
+	};
+}

@@ -5,38 +5,37 @@
 #include "Parser.h"
 #include "exception.h"
 
-using namespace inter;
+using namespace cscript;
 using namespace std;
 
-int main(int argc,char* argv[]) //* Eintrittsfunktion *//
+int main(int argc, char* argv[])
 {
-	if (argc > 1) // auf programmargumente überprüfen
+	if (argc > 1)
 	{
 		int iSourceSize = 0;
 		FILE*   sSource;
 		sSource = fopen(argv[1], "rb");
 		if (sSource)
 		{
-			//Dateigröße bestimmen
 			fseek(sSource, 0, SEEK_END);
 			iSourceSize = ftell(sSource);
 			fseek(sSource, 0, SEEK_SET);
-			//Speicherreservierung für pRawContent
-			unsigned char*			pRawContent = new unsigned char[iSourceSize + 1];
+
+			char* pRawContent = new char[iSourceSize + 1];
 			fread(pRawContent, 1, iSourceSize, sSource);
 			pRawContent[iSourceSize] = '\0';
 			fclose(sSource);
-			// Objekterzeugung der Klasse Lexer -> pLexer
-			Lexer*					pLexer = new Lexer(pRawContent);
+
+			Lexer*	pLexer = new Lexer(pRawContent, iSourceSize);
 			pLexer->prelex();
-			// Objekterzeugung der Klasse Parser -> pParser
-			Parser*					pParser = new Parser(pLexer);
-			inter::exception*		exc;
-			while (!pLexer->endofstream())
+
+			Parser*	pParser = new Parser(pLexer);
+			cscript::Exception*	exc;
+			while (!pLexer->isEndOfTokenList())
 			{
 				exc = pParser->parsenext();
 				if (exc != NULL)
-					cout << "\n" << "Ausdruck Nr.  " << exc->getexprnum() << "\nFehler: " << exc->tostring();
+					cout << "\n" << "Expression " << exc->getexprnum() << "\nError: " << exc->tostring();
 			}
 			SAFEDEL(pLexer);
 			SAFEDEL(pParser);

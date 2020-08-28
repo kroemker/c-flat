@@ -1,35 +1,32 @@
 #pragma once
 
-namespace inter
+namespace cscript
 {
 
-//Fließkommapräzision
-#define LOW_PRECISION // 32 bit Gleitkommazahlen
+#define LOW_PRECISION
 #ifdef LOW_PRECISION
 	#define REALNUM float
 #else
 	#define REALNUM double
 #endif
 
-//Einstellungen
-#define ID_SIZE_LIMIT	64					// Maximale Identifier Laenge
-#define TOKENTYPES		8					// Anzahl der Tokentypen
-#define KEYWORDTYPES	512					// Start der Keywordtypen
-#define KEYWORDCOUNT	16					// Keyword Anzahl
+#define ID_SIZE_LIMIT	64
+#define TOKENTYPES		8
+#define KEYWORDTYPES	512
+#define KEYWORDCOUNT	16
 
-#define SAFEDEL(p) if(p)delete p; p = NULL    // Makro um Pointer sicher zu löschen 
+#define SAFEDEL(p) if(p)delete p; p = NULL 
 
-//Typen für Tokens
 enum ttypes
 {
-	REALLIT=256,	//real zahlen
-	INT,			//integer zahlen
-	STRING,         //string literale
-	ASSIGN,			//zuweisungsoperator ':='
-	GREATER_EQUALS, //größergleich-operator '>='
-	LESS_EQUALS,    //kleinergleich-operator '<='
-	UNEQUALS,		//ungleich-operator '<>'
-	ID				//Identifier
+	REALLIT=256,
+	INT,
+	STRING,
+	GREATER_EQUALS,
+	LESS_EQUALS,
+	UNEQUALS,
+	EQUALS,
+	ID
 };
 
 static const char* ttypes_s[] =
@@ -37,27 +34,27 @@ static const char* ttypes_s[] =
 	"TYPE_REAL",
 	"TYPE_INT",
 	"TYPE_STRING",
-	"TYPE_ASSIGN",
 	"TYPE_GREATER_EQUALS",
 	"TYPE_LESS_EQUALS",
 	"TYPE_UNEQUALS",
+	"TYPE_EQUALS",
 	"TYPE_ID"
 };
 
 enum keywords 
 {
-	VAR=512,       // Standardschlüsselwörter
+	VAR=512,
 	BEGIN,
 	END,
-	IF,			   // Ablaufskontrolle
+	IF,
 	THEN,
 	ELSE,
 	WHILE,
 	DO,
-	AND,		   // Vergleichsoperatoren
+	AND,
 	OR, 
 	NOT,
-	BOOLEAN,       // Datentypen
+	BOOLEAN,
 	INTEGER,
 	REAL,
 	TRUE,
@@ -117,4 +114,4 @@ enum tresult
 	RES_REAL
 };
 
-} // namespace
+}

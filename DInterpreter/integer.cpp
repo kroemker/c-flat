@@ -1,13 +1,13 @@
 #include "integer.h"
 
-namespace inter
+namespace cscript
 {
 
-integer::integer(int v) : token(ttypes::INT),value(v)
+Integer::Integer(int v) : Token(ttypes::INT),value(v)
 {
 }
 
-const char* integer::tostring()
+const char* Integer::tostring()
 {
 	char* s = new char[16]; 
 	sprintf(s,"%d",value); 
@@ -15,4 +15,4 @@ const char* integer::tostring()
 	return s;
 }
 
-} // namespace
+}

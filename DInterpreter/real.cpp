@@ -1,18 +1,18 @@
 #include "real.h"
 
-namespace inter
+namespace cscript
 {
 
-real::real(REALNUM v) : token(ttypes::REALLIT)
+Real::Real(REALNUM v) : Token(ttypes::REALLIT)
 {
 	value = v;
 }
 
-const char* real::tostring()
+const char* Real::tostring()
 {
 	char* s = new char[16]; 
 	sprintf(s,"%f",value); 
 	return s;
 }
 
-} // namespace
+}
