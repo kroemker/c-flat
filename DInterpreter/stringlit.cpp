@@ -1,6 +1,6 @@
 #include "stringlit.h"
 
-namespace cscript
+namespace cflat
 {
 
 	Stringlit::Stringlit(void) : Token(ttypes::STRING)

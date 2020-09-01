@@ -1,6 +1,6 @@
 #pragma once
 
-namespace cscript
+namespace cflat
 {
 
 #define LOW_PRECISION
@@ -20,13 +20,13 @@ namespace cscript
 enum ttypes
 {
 	REALLIT=256,
-	INT,
+	INTEGER,
 	STRING,
 	GREATER_EQUALS,
 	LESS_EQUALS,
 	UNEQUALS,
 	EQUALS,
-	ID
+	ID,
 };
 
 static const char* ttypes_s[] =
@@ -54,9 +54,9 @@ enum keywords
 	AND,
 	OR, 
 	NOT,
-	BOOLEAN,
-	INTEGER,
-	REAL,
+	BOOL,
+	INT,
+	FLOAT,
 	TRUE,
 	FALSE
 }; 
@@ -74,9 +74,9 @@ static const char* keywords_s[] =
 	"and",
 	"or",
 	"not",
-    "boolean",
-	"integer",
-	"real",
+    "bool",
+	"int",
+	"float",
 	"true",
 	"false"
 };
@@ -91,7 +91,10 @@ enum texceptions
 	TYPEINCONGRUENCE,
 	BOOLEANOPERATORTYPEFAULT,
 	THENEXPECTED,
-	DOEXPECTED
+	DOEXPECTED,
+	ID_EXPECTED,
+	SYMBOL_REDEFINITION,
+	INVALID_CHARACTER
 };
 
 static const char* texceptions_s[] =
@@ -104,14 +107,17 @@ static const char* texceptions_s[] =
 	"TYPEINCONGRUENCE; Typen sind nicht gleich und können nicht bearbeitet werden!",
 	"BOOLEAN OPERATOR TYPE FAULT; Der Operator ist nur auf booleesche Typen anwendbar!",
 	"THEN EXPECTED; Das THEN-Schlüsselwort wurde erwartet, aber nicht gefunden!",
-	"DO EXPECTED; Das DO-Schlüsselwort wurde erwartet, aber nicht gefunden!"
+	"DO EXPECTED; Das DO-Schlüsselwort wurde erwartet, aber nicht gefunden!",
+	"Identifier expected",
+	"Redefinition of symbol",
+	"Invalid character found"
 };
 
 enum tresult
 {
 	RES_BOOLEAN=0,
 	RES_INTEGER,
-	RES_REAL
+	RES_FLOAT
 };
 
 }

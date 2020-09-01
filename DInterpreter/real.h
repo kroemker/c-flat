@@ -4,7 +4,7 @@
 #include "symbols.h"
 #include <string>
 
-namespace cscript
+namespace cflat
 {
 
 class Real : public Token

@@ -2,7 +2,7 @@
 
 #include "symbols.h"
 
-namespace cscript
+namespace cflat
 {
 
 class Variable

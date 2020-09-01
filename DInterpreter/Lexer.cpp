@@ -1,9 +1,9 @@
 #include "Lexer.h"
 
-namespace cscript
+namespace cflat
 {
 
-	Lexer::Lexer(char* str, int len) : input(str), inputLength(len), inputIndex(0), numExpr(0), tokenIndex(0), prelexed(false)
+	Lexer::Lexer(char* str, int len) : input(str), inputLength(len), inputIndex(0), numExpr(0), tokenIndex(0), prelexed(false), line(1)
 	{
 	}
 
@@ -15,7 +15,10 @@ namespace cscript
 	{
 		Token* t;
 		while (!isready() && ((t = getnexttoken()) != NULL))
+		{
+			t->setline(line);
 			tokens.push_back(t);
+		}
 		prelexed = true;
 	}
 
@@ -26,6 +29,7 @@ namespace cscript
 		char cCurrent = input[inputIndex];
 		if (cCurrent == ' ' || cCurrent == '\r' || cCurrent == '\t' || cCurrent == '\n')
 		{
+			if (cCurrent == '\n') line++;
 			inputIndex++;
 			return getnexttoken();
 		}
@@ -38,17 +42,21 @@ namespace cscript
 			{
 				while (!isready() && input[inputIndex] != '\n')
 					inputIndex++;
+				line++;
 			}
 			else if (!isready() && input[inputIndex] == '*')
 			{
 				while (!isready())
 				{
-					if (!isready() && input[inputIndex] != '*')
+					inputIndex++;
+					if (!isready() && input[inputIndex] == '*')
 					{
 						inputIndex++;
 						if (!isready() && input[inputIndex] == '/')
 							break;
 					}
+					if (!isready() && input[inputIndex] == '\n')
+						line++;
 				}
 			}
 			inputIndex++;
@@ -57,8 +65,9 @@ namespace cscript
 		{
 			inputIndex++;
 			Stringlit* slit = new Stringlit();
-			while (input[inputIndex] != '\"')
+			while (!isready() && input[inputIndex] != '\"')
 			{
+				if (input[inputIndex] == '\n') line++;
 				slit->append(input[inputIndex]);
 				inputIndex++;
 			}
@@ -152,5 +161,4 @@ namespace cscript
 		}
 		return NULL;
 	}
-
 }

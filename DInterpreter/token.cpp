@@ -1,6 +1,6 @@
 #include "token.h"
 
-namespace cscript
+namespace cflat
 {
 
 Token::Token(int t) : type(t)

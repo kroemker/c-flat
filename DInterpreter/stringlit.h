@@ -3,7 +3,7 @@
 #include "token.h"
 #include "symbols.h"
 
-namespace cscript
+namespace cflat
 {
 
 class Stringlit : public Token

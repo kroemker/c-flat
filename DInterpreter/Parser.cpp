@@ -1,12 +1,12 @@
 #include "Parser.h"
 
-namespace cscript
+namespace cflat
 {
 
-	Parser::Parser(Lexer* pLex) : pLexer(pLex)
+	Parser::Parser(Lexer* lexer) : lexer(lexer)
 	{
-		if (!pLex->isPrelexed())
-			pLex->prelex();
+		if (!lexer->isPrelexed())
+			lexer->prelex();
 	}
 
 	Parser::~Parser(void)
@@ -17,131 +17,104 @@ namespace cscript
 	{
 		try
 		{
-			Token* t0 = pLexer->look();
-			if (t0->gettype() == keywords::VAR)
-			{
-				pLexer->next();
-				decls();
-			}
 			stmts();
 		}
 		catch (texceptions i)
 		{
-			return new Exception(i, pLexer->getExpressionCount());
+			Exception* e = new Exception(i, lexer->getExpressionCount(), lexer->look()->getline());
+			lexer->next();
+			return e;
 		}
 		return NULL;
 	}
 
 	void Parser::stmts()
 	{
-		Token* t0 = pLexer->look();
-		if (t0->gettype() == '{')
+		decls();
+		Token* t0 = lexer->look();
+		if (t0->gettype() == ';')
+			lexer->next();
+		else if (t0->gettype() == '{')
 		{
-			pLexer->next();
-			while (pLexer->look()->gettype() != '}')
+			lexer->next();
+			while (lexer->look()->gettype() != '}')
 				stmts();
-			pLexer->next();
-			if (pLexer->look()->gettype() != ';')
-				throw texceptions::SEMICOLON_EXPECTED;
-			pLexer->next();
+			lexer->next();
 		}
 		else if (t0->gettype() == keywords::WHILE)
 		{
-			pLexer->next();
-			int position = pLexer->getTokenIndex();
+			lexer->next();
+			int position = lexer->getTokenIndex();
 			Variable* expr = boolexpr();
-			if (pLexer->look()->gettype() == keywords::DO)
+			while (expr->getbval() == true)
 			{
-				pLexer->next();
-				while (expr->getbval() == true)
+				stmts();
+				lexer->jump(position);
+				expr = boolexpr();
+			}
+			if (lexer->look()->gettype() == '{')
+			{
+				int begincounter = 1;
+				lexer->next();
+				while (begincounter > 0)
 				{
-					stmts();
-					pLexer->jump(position);
-					expr = boolexpr();
-					pLexer->next();
-				}
-				if (pLexer->look()->gettype() == '{')
-				{
-					int begincounter = 1;
-					pLexer->next();
-					while (begincounter > 0)
-					{
-						if (pLexer->look()->gettype() == '{')
-							begincounter++;
-						else if (pLexer->look()->gettype() == '}')
-						{
-							pLexer->next();
-							if (pLexer->look()->gettype() != ';')
-								throw texceptions::SEMICOLON_EXPECTED;
-							begincounter--;
-						}
-						pLexer->next();
-					}
-				}
-				else
-				{
-					while (pLexer->look()->gettype() != ';')
-						pLexer->next();
-					pLexer->next();
+					if (lexer->look()->gettype() == '{')
+						begincounter++;
+					else if (lexer->look()->gettype() == '}')
+						begincounter--;
+					lexer->next();
 				}
 			}
 			else
-				throw texceptions::DOEXPECTED;
+			{
+				while (lexer->look()->gettype() != ';')
+					lexer->next();
+				lexer->next();
+			}
 		}
 		else if (t0->gettype() == keywords::IF)
 		{
-			pLexer->next();
+			lexer->next();
 			Variable* expr = boolexpr();
-			if (pLexer->look()->gettype() == keywords::THEN)
+			if (expr->getbval() == true)
+				stmts();
+			else
 			{
-				pLexer->next();
-				if (expr->getbval() == true)
-					stmts();
+				if (lexer->look()->gettype() == '{')
+				{
+					int blockcounter = 1;
+					lexer->next();
+					while (blockcounter > 0)
+					{
+						if (lexer->look()->gettype() == '{')
+							blockcounter++;
+						else if (lexer->look()->gettype() == '}')
+							blockcounter--;
+						lexer->next();
+					}
+					if (lexer->look()->gettype() == keywords::ELSE)
+					{
+						lexer->next();
+						stmts();
+					}
+				}
 				else
 				{
-					if (pLexer->look()->gettype() == '{')
+					while (lexer->look()->gettype() != ';')
+						lexer->next();
+					lexer->next();
+					if (lexer->look()->gettype() == keywords::ELSE)
 					{
-						int begincounter = 1;
-						pLexer->next();
-						while (begincounter > 0)
-						{
-							if (pLexer->look()->gettype() == '{')
-								begincounter++;
-							else if (pLexer->look()->gettype() == '}')
-							{
-								pLexer->next();
-								if (pLexer->look()->gettype() != ';')
-									throw texceptions::SEMICOLON_EXPECTED;
-								begincounter--;
-							}
-							pLexer->next();
-						}
-						if (pLexer->look()->gettype() == keywords::ELSE)
-						{
-							pLexer->next();
-							stmts();
-						}
-					}
-					else
-					{
-						while (pLexer->look()->gettype() != ';')
-							pLexer->next();
-						pLexer->next();
-						if (pLexer->look()->gettype() == keywords::ELSE)
-						{
-							pLexer->next();
-							stmts();
-						}
+						lexer->next();
+						stmts();
 					}
 				}
 			}
-			else
-				throw texceptions::THENEXPECTED;
 		}
 		else if (t0->gettype() == ttypes::ID)
 		{
-			pLexer->next();
-			Token* t1 = pLexer->look();
+			lexer->next();
+			Token* t1 = lexer->look();
 			if (t1->gettype() == '=')
 			{
 				std::list<Variable*>::iterator iter;
@@ -156,35 +129,35 @@ namespace cscript
 				}
 				if (v == NULL)
 					throw texceptions::UNDEFINED_SYMBOL;
-				pLexer->next();
+				lexer->next();
 				if (v->gettype() == tresult::RES_INTEGER)
 					v->setval(mathexpr(tresult::RES_INTEGER, false)->getival());
-				else if (v->gettype() == tresult::RES_REAL)
-					v->setval(mathexpr(tresult::RES_REAL, false)->getrval());
+				else if (v->gettype() == tresult::RES_FLOAT)
+					v->setval(mathexpr(tresult::RES_FLOAT, false)->getrval());
 				else
 					v->setval(boolexpr()->getbval());
-				pLexer->next();
+				lexer->next();
 			}
 			else if (t1->gettype() == '(')
 			{
-				pLexer->next();
+				lexer->next();
 				Identifier* i0 = dynamic_cast<Identifier*>(t0);
-				if (pLexer->look()->gettype() == ttypes::STRING)
+				if (lexer->look()->gettype() == ttypes::STRING)
 				{
 					if (strcmp(i0->get(), "print") == 0)
 					{
-						Stringlit* s = dynamic_cast<Stringlit*>(pLexer->look());
+						Stringlit* s = dynamic_cast<Stringlit*>(lexer->look());
 						std::cout << s->get();
-						pLexer->next();
-						if (pLexer->look()->gettype() != ')')
+						lexer->next();
+						if (lexer->look()->gettype() != ')')
 							throw texceptions::CLOSEBRACKET_EXPECTED;
 					}
 					else if (strcmp(i0->get(), "println") == 0)
 					{
-						Stringlit* s = dynamic_cast<Stringlit*>(pLexer->look());
+						Stringlit* s = dynamic_cast<Stringlit*>(lexer->look());
 						std::cout << s->get() << '\n';
-						pLexer->next();
-						if (pLexer->look()->gettype() != ')')
+						lexer->next();
+						if (lexer->look()->gettype() != ')')
 							throw texceptions::CLOSEBRACKET_EXPECTED;
 
 					}
@@ -197,14 +170,14 @@ namespace cscript
 					{
 						Variable* k = mathexpr(tresult::RES_INTEGER, false);
 						std::cout << k->getival();
-						if (pLexer->look()->gettype() != ')')
+						if (lexer->look()->gettype() != ')')
 							throw texceptions::CLOSEBRACKET_EXPECTED;
 					}
 					else if (strcmp(i0->get(), "realout") == 0)
 					{
-						Variable* k = mathexpr(tresult::RES_REAL, false);
+						Variable* k = mathexpr(tresult::RES_FLOAT, false);
 						std::cout << k->getrval();
-						if (pLexer->look()->gettype() != ')')
+						if (lexer->look()->gettype() != ')')
 							throw texceptions::CLOSEBRACKET_EXPECTED;
 					}
 					else if (strcmp(i0->get(), "boolout") == 0)
@@ -214,7 +187,7 @@ namespace cscript
 							std::cout << "true";
 						else
 							std::cout << "false";
-						if (pLexer->look()->gettype() != ')')
+						if (lexer->look()->gettype() != ')')
 							throw texceptions::CLOSEBRACKET_EXPECTED;
 					}
 					else if (strcmp(i0->get(), "in") == 0)
@@ -223,7 +196,7 @@ namespace cscript
 						Variable* v = NULL;
 						for (iter = variables.begin(); iter != variables.end(); iter++)
 						{
-							if (strcmp(dynamic_cast<Identifier*>(pLexer->look())->get(), (*iter)->getname()) == 0)
+							if (strcmp(dynamic_cast<Identifier*>(lexer->look())->get(), (*iter)->getname()) == 0)
 							{
 								v = (*iter);
 								break;
@@ -243,40 +216,42 @@ namespace cscript
 							std::cin >> i;
 							v->setval(i);
 						}
-						else if (v->gettype() == tresult::RES_REAL)
+						else if (v->gettype() == tresult::RES_FLOAT)
 						{
 							REALNUM r = 0;
 							std::cin >> r;
 							v->setval(r);
 						}
-						pLexer->next();
-						if (pLexer->look()->gettype() != ')')
+						lexer->next();
+						if (lexer->look()->gettype() != ')')
 							throw texceptions::CLOSEBRACKET_EXPECTED;
 					}
 					else if (strcmp(i0->get(), "wait") == 0)
 					{
 						system("PAUSE");
-						if (pLexer->look()->gettype() != ')')
+						if (lexer->look()->gettype() != ')')
 							throw texceptions::CLOSEBRACKET_EXPECTED;
 					}
 				}
-				pLexer->next();
-				if (pLexer->look()->gettype() != ';')
+				lexer->next();
+				if (lexer->look()->gettype() != ';')
 					throw texceptions::SEMICOLON_EXPECTED;
-				pLexer->next();
+				lexer->next();
 			}
 			else
 				throw texceptions::ASSIGNORFUNCTIONCALL_EXPECTED;
 		}
+		else
+			throw texceptions::INVALID_CHARACTER;
 	}
 
 	Variable* Parser::boolexpr()
 	{
 		Variable* r = joinexpr();
 		Variable* k = r;
-		if (pLexer->look()->gettype() == keywords::OR)
+		if (lexer->look()->gettype() == keywords::OR)
 		{
-			pLexer->next();
+			lexer->next();
 			k = new Variable(tresult::RES_BOOLEAN, NULL);
 			Variable* h = joinexpr();
 			if ((r->gettype() == tresult::RES_BOOLEAN) && (k->gettype() == tresult::RES_BOOLEAN))
@@ -291,9 +266,9 @@ namespace cscript
 	{
 		Variable* r = equalityexpr();
 		Variable* k = r;
-		if (pLexer->look()->gettype() == keywords::AND)
+		if (lexer->look()->gettype() == keywords::AND)
 		{
-			pLexer->next();
+			lexer->next();
 			k = new Variable(tresult::RES_BOOLEAN, NULL);
 			Variable* h = equalityexpr();
 			if ((r->gettype() == tresult::RES_BOOLEAN) && (k->gettype() == tresult::RES_BOOLEAN))
@@ -308,9 +283,9 @@ namespace cscript
 	{
 		Variable* r = relexpr();
 		Variable* k = r;
-		if (pLexer->look()->gettype() == ttypes::EQUALS)
+		if (lexer->look()->gettype() == ttypes::EQUALS)
 		{
-			pLexer->next();
+			lexer->next();
 			Variable* p = relexpr();
 			if (!(p->gettype() == r->gettype()))
 				throw texceptions::TYPEINCONGRUENCE;
@@ -321,9 +296,9 @@ namespace cscript
 			else
 				k->setval(r->getrval() == p->getrval());
 		}
-		else if (pLexer->look()->gettype() == ttypes::UNEQUALS)
+		else if (lexer->look()->gettype() == ttypes::UNEQUALS)
 		{
-			pLexer->next();
+			lexer->next();
 			Variable* p = relexpr();
 			if (!(p->gettype() == r->gettype()))
 				throw texceptions::TYPEINCONGRUENCE;
@@ -339,31 +314,31 @@ namespace cscript
 
 	Variable* Parser::relexpr()
 	{
-		Variable* r = mathexpr(tresult::RES_REAL, true);
+		Variable* r = mathexpr(tresult::RES_FLOAT, true);
 		Variable* k = r;
-		if (pLexer->look()->gettype() == '<')
+		if (lexer->look()->gettype() == '<')
 		{
-			pLexer->next();
+			lexer->next();
 			k = new Variable(tresult::RES_BOOLEAN, NULL);
-			k->setval(r->getrval() < mathexpr(tresult::RES_REAL, true)->getrval());
+			k->setval(r->getrval() < mathexpr(tresult::RES_FLOAT, true)->getrval());
 		}
-		else if (pLexer->look()->gettype() == ttypes::LESS_EQUALS)
+		else if (lexer->look()->gettype() == ttypes::LESS_EQUALS)
 		{
-			pLexer->next();
+			lexer->next();
 			k = new Variable(tresult::RES_BOOLEAN, NULL);
-			k->setval(r->getrval() <= mathexpr(tresult::RES_REAL, true)->getrval());
+			k->setval(r->getrval() <= mathexpr(tresult::RES_FLOAT, true)->getrval());
 		}
-		else if (pLexer->look()->gettype() == '>')
+		else if (lexer->look()->gettype() == '>')
 		{
-			pLexer->next();
+			lexer->next();
 			k = new Variable(tresult::RES_BOOLEAN, NULL);
-			k->setval(r->getrval() > mathexpr(tresult::RES_REAL, true)->getrval());
+			k->setval(r->getrval() > mathexpr(tresult::RES_FLOAT, true)->getrval());
 		}
-		else if (pLexer->look()->gettype() == ttypes::GREATER_EQUALS)
+		else if (lexer->look()->gettype() == ttypes::GREATER_EQUALS)
 		{
-			pLexer->next();
+			lexer->next();
 			k = new Variable(tresult::RES_BOOLEAN, NULL);
-			k->setval(r->getrval() >= mathexpr(tresult::RES_REAL, true)->getrval());
+			k->setval(r->getrval() >= mathexpr(tresult::RES_FLOAT, true)->getrval());
 		}
 		return k;
 	}
@@ -371,24 +346,24 @@ namespace cscript
 	Variable* Parser::mathexpr(int numerictype, bool isboolexpr)
 	{
 		Variable *v = mathterm(numerictype, isboolexpr);
-		while ((pLexer->look()->gettype() == '+') || (pLexer->look()->gettype() == '-'))
+		while ((lexer->look()->gettype() == '+') || (lexer->look()->gettype() == '-'))
 		{
-			if (pLexer->look()->gettype() == '+')
+			if (lexer->look()->gettype() == '+')
 			{
-				pLexer->next();
+				lexer->next();
 				if (numerictype == tresult::RES_INTEGER)
 					v->setval(v->getival() + mathterm(numerictype, isboolexpr)->getival());
-				else if (numerictype == tresult::RES_REAL)
+				else if (numerictype == tresult::RES_FLOAT)
 					v->setval(v->getrval() + mathterm(numerictype, isboolexpr)->getrval());
 				else
 					throw texceptions::BOOLEANILLEGALLYFOUND;
 			}
-			else if (pLexer->look()->gettype() == '-')
+			else if (lexer->look()->gettype() == '-')
 			{
-				pLexer->next();
+				lexer->next();
 				if (numerictype == tresult::RES_INTEGER)
 					v->setval(v->getival() - mathterm(numerictype, isboolexpr)->getival());
-				else if (numerictype == tresult::RES_REAL)
+				else if (numerictype == tresult::RES_FLOAT)
 					v->setval(v->getrval() - mathterm(numerictype, isboolexpr)->getrval());
 				else
 					throw texceptions::BOOLEANILLEGALLYFOUND;
@@ -400,24 +375,24 @@ namespace cscript
 	Variable* Parser::mathterm(int numerictype, bool isboolexpr)
 	{
 		Variable *v = mathunary(numerictype, isboolexpr);
-		while ((pLexer->look()->gettype() == '*') || (pLexer->look()->gettype() == '/'))
+		while ((lexer->look()->gettype() == '*') || (lexer->look()->gettype() == '/'))
 		{
-			if (pLexer->look()->gettype() == '*')
+			if (lexer->look()->gettype() == '*')
 			{
-				pLexer->next();
+				lexer->next();
 				if (numerictype == tresult::RES_INTEGER)
 					v->setval(v->getival() * mathunary(numerictype, isboolexpr)->getival());
-				else if (numerictype == tresult::RES_REAL)
+				else if (numerictype == tresult::RES_FLOAT)
 					v->setval(v->getrval() * mathunary(numerictype, isboolexpr)->getrval());
 				else
 					throw texceptions::BOOLEANILLEGALLYFOUND;
 			}
-			else if (pLexer->look()->gettype() == '/')
+			else if (lexer->look()->gettype() == '/')
 			{
-				pLexer->next();
+				lexer->next();
 				if (numerictype == tresult::RES_INTEGER)
 					v->setval(static_cast<int>(v->getival() / mathunary(numerictype, isboolexpr)->getival()));
-				else if (numerictype == tresult::RES_REAL)
+				else if (numerictype == tresult::RES_FLOAT)
 					v->setval(static_cast<REALNUM>(v->getrval() / mathunary(numerictype, isboolexpr)->getrval()));
 				else
 					throw texceptions::BOOLEANILLEGALLYFOUND;
@@ -428,23 +403,23 @@ namespace cscript
 
 	Variable* Parser::mathunary(int numerictype, bool isboolexpr)
 	{
-		if (pLexer->look()->gettype() == '-')
+		if (lexer->look()->gettype() == '-')
 		{
-			pLexer->next();
+			lexer->next();
 			Variable* k = new Variable(numerictype, NULL);
 			if (numerictype == tresult::RES_INTEGER)
 				k->setval(-mathunary(numerictype, isboolexpr)->getival());
-			else if (numerictype == tresult::RES_REAL)
+			else if (numerictype == tresult::RES_FLOAT)
 				k->setval(-mathunary(numerictype, isboolexpr)->getrval());
 			else
 				throw texceptions::BOOLEANILLEGALLYFOUND;
 			return k;
 		}
-		else if (pLexer->look()->gettype() == keywords::NOT)
+		else if (lexer->look()->gettype() == keywords::NOT)
 		{
 			if (!isboolexpr)
 				throw texceptions::BOOLEANOPERATORTYPEFAULT;
-			pLexer->next();
+			lexer->next();
 			Variable* n = new Variable(tresult::RES_BOOLEAN, NULL);
 			n->setval(!(mathunary(numerictype, true)->getbval()));
 			return n;
@@ -454,38 +429,38 @@ namespace cscript
 
 	Variable* Parser::factor(int numerictype, bool isboolexpr)
 	{
-		switch (pLexer->look()->gettype())
+		switch (lexer->look()->gettype())
 		{
 		case '(':
 		{
-			pLexer->next();
+			lexer->next();
 			Variable* v;
 			if (isboolexpr)
 				v = boolexpr();
 			else
 				v = mathexpr(numerictype, false);
 
-			if (pLexer->look()->gettype() == ')')
-				pLexer->next();
+			if (lexer->look()->gettype() == ')')
+				lexer->next();
 			else
 				throw texceptions::CLOSEBRACKET_EXPECTED;
 			return v;
 			break;
 		}
-		case ttypes::INT:
+		case ttypes::INTEGER:
 		{
 			Variable* c;
-			if (numerictype == tresult::RES_REAL)
+			if (numerictype == tresult::RES_FLOAT)
 			{
-				c = new Variable(tresult::RES_REAL, NULL);
-				c->setval(static_cast<REALNUM>(dynamic_cast<Integer*>(pLexer->look())->getvalue()));
+				c = new Variable(tresult::RES_FLOAT, NULL);
+				c->setval(static_cast<REALNUM>(dynamic_cast<Integer*>(lexer->look())->getvalue()));
 			}
 			else
 			{
 				c = new Variable(tresult::RES_INTEGER, NULL);
-				c->setval(dynamic_cast<Integer*>(pLexer->look())->getvalue());
+				c->setval(dynamic_cast<Integer*>(lexer->look())->getvalue());
 			}
-			pLexer->next();
+			lexer->next();
 			return c;
 			break;
 		}
@@ -495,14 +470,14 @@ namespace cscript
 			if (numerictype == tresult::RES_INTEGER)
 			{
 				x = new Variable(tresult::RES_INTEGER, NULL);
-				x->setval(static_cast<int>(dynamic_cast<Real*>(pLexer->look())->getvalue()));
+				x->setval(static_cast<int>(dynamic_cast<Real*>(lexer->look())->getvalue()));
 			}
 			else
 			{
-				x = new Variable(tresult::RES_REAL, NULL);
-				x->setval(dynamic_cast<Real*>(pLexer->look())->getvalue());
+				x = new Variable(tresult::RES_FLOAT, NULL);
+				x->setval(dynamic_cast<Real*>(lexer->look())->getvalue());
 			}
-			pLexer->next();
+			lexer->next();
 			return x;
 			break;
 		}
@@ -512,7 +487,7 @@ namespace cscript
 				throw texceptions::BOOLEANILLEGALLYFOUND;
 			Variable* l = new Variable(tresult::RES_BOOLEAN, NULL);
 			l->setval(true);
-			pLexer->next();
+			lexer->next();
 			return l;
 			break;
 		}
@@ -522,7 +497,7 @@ namespace cscript
 				throw texceptions::BOOLEANILLEGALLYFOUND;
 			Variable* l = new Variable(tresult::RES_BOOLEAN, NULL);
 			l->setval(false);
-			pLexer->next();
+			lexer->next();
 			return l;
 			break;
 		}
@@ -531,9 +506,9 @@ namespace cscript
 			std::list<Variable*>::iterator iter;
 			for (iter = variables.begin(); iter != variables.end(); iter++)
 			{
-				if (strcmp(dynamic_cast<Identifier*>(pLexer->look())->get(), (*iter)->getname()) == 0)
+				if (strcmp(dynamic_cast<Identifier*>(lexer->look())->get(), (*iter)->getname()) == 0)
 				{
-					pLexer->next();
+					lexer->next();
 					return (*iter);
 				}
 			}
@@ -544,39 +519,44 @@ namespace cscript
 
 	void Parser::decls()
 	{
-		while (pLexer->look()->gettype() != '{')
+		while (decl() != 0)
 		{
-			decl();
-			pLexer->next();
+			if (lexer->look()->gettype() != ';')
+				throw texceptions::SEMICOLON_EXPECTED;
+			lexer->next();
 		}
 	}
 
-	void Parser::decl()
+	int Parser::decl()
 	{
-		Token* t1 = pLexer->look();
-		if (t1->gettype() == ttypes::ID)
+		int varType = 0;
+		Token* t1 = lexer->look();
+		if (t1->gettype() == keywords::INT)
+			varType = tresult::RES_INTEGER;
+		else if (t1->gettype() == keywords::FLOAT)
+			varType = tresult::RES_FLOAT;
+		else if (t1->gettype() == keywords::BOOL)
+			varType = tresult::RES_BOOLEAN;
+
+		if (varType != 0)
 		{
-			pLexer->next();
-			Token* t2 = pLexer->look();
-			if (t2->gettype() == ':')
+			lexer->next();
+			Token* t2 = lexer->look();
+			if (t2->gettype() == ttypes::ID)
 			{
-				pLexer->next();
-				Token* t3 = pLexer->look();
-				if (t3->gettype() == keywords::INTEGER)
+				char* ident = dynamic_cast<Identifier*>(t2)->get();
+				for (auto it = variables.begin(); it != variables.end(); ++it)
 				{
-					variables.push_back(new Variable(tresult::RES_INTEGER, dynamic_cast<Identifier*>(t1)->get()));
+					if (strcmp((*it)->getname(), ident) == 0)
+						throw texceptions::SYMBOL_REDEFINITION;
 				}
-				else if (t3->gettype() == keywords::REAL)
-				{
-					variables.push_back(new Variable(tresult::RES_REAL, dynamic_cast<Identifier*>(t1)->get()));
-				}
-				else if (t3->gettype() == keywords::BOOLEAN)
-				{
-					variables.push_back(new Variable(tresult::RES_BOOLEAN, dynamic_cast<Identifier*>(t1)->get()));
-				}
+				variables.push_back(new Variable(varType, ident));
 			}
-			pLexer->next();
+			else
+				throw texceptions::ID_EXPECTED;
+			lexer->next();
 		}
+		return varType;
 	}
 
 }

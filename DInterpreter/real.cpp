@@ -1,6 +1,6 @@
 #include "real.h"
 
-namespace cscript
+namespace cflat
 {
 
 Real::Real(REALNUM v) : Token(ttypes::REALLIT)

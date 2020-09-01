@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace cscript
+namespace cflat
 {
 
 class Identifier : public Token

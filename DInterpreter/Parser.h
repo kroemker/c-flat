@@ -8,7 +8,7 @@
 #include "token.h"
 #include "exception.h"
 
-namespace cscript
+namespace cflat
 {
 
 	class Parser
@@ -27,10 +27,10 @@ namespace cscript
 		Variable*					mathunary(int numerictype, bool isboolexpr);
 		Variable*					factor(int numerictype, bool isboolexpr);
 		void						stmts();
-		void						decl();
+		int							decl();
 		void						decls();
 		std::list<Variable*>		variables;
-		Lexer*						pLexer;
+		Lexer*						lexer;
 	};
 
 }

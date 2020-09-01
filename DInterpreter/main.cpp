@@ -5,7 +5,7 @@
 #include "Parser.h"
 #include "exception.h"
 
-using namespace cscript;
+using namespace cflat;
 using namespace std;
 
 int main(int argc, char* argv[])
@@ -30,12 +30,12 @@ int main(int argc, char* argv[])
 			pLexer->prelex();
 
 			Parser*	pParser = new Parser(pLexer);
-			cscript::Exception*	exc;
+			cflat::Exception*	exc;
 			while (!pLexer->isEndOfTokenList())
 			{
 				exc = pParser->parsenext();
 				if (exc != NULL)
-					cout << "\n" << "Expression " << exc->getexprnum() << "\nError: " << exc->tostring();
+					cout << "\n" << "Line: " << exc->getline() << ", Expression: " << exc->getexprnum() << "\nError: " << exc->tostring() << "\n";
 			}
 			SAFEDEL(pLexer);
 			SAFEDEL(pParser);

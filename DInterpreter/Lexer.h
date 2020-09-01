@@ -9,7 +9,7 @@
 #include "integer.h"
 #include "stringlit.h"
 
-namespace cscript
+namespace cflat
 {
 
 	class Lexer
@@ -35,5 +35,6 @@ namespace cscript
 		unsigned int		numExpr;
 		bool				prelexed;
 		int					inputLength;
+		int					line;
 	};
 }

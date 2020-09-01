@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <cstdio>
 
-namespace cscript
+namespace cflat
 {
 
 class Integer : public Token

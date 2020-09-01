@@ -1,6 +1,6 @@
 #include "variable.h"
 
-namespace cscript
+namespace cflat
 {
 
 Variable::Variable(int t,char* n) : name(n),type(t)
@@ -13,7 +13,7 @@ Variable::Variable(int t,char* n) : name(n),type(t)
 	{
 		val = new int;
 	}
-	else if(t == tresult::RES_REAL)
+	else if(t == tresult::RES_FLOAT)
 	{
 		val = new REALNUM;
 	}
