@@ -5,7 +5,8 @@
 #include "Instruction.h"
 #include "symbols.h"
 #include "Lexer.h"
-#include "variable.h" 
+#include "function.h"
+#include "variable.h"
 #include "token.h"
 #include "exception.h"
 
@@ -33,13 +34,17 @@ namespace cflat
 		DataType					generalizedTypecast(DataType t, DataType s, int tSlot, int sSlot);
 		void						forcedTypecast(DataType t, DataType s, int tSlot);
 		void						stmts();
-		int							decl(bool allowFuncs);
+		DataType					decl(bool allowFuncs);
 		void						decls(bool allowFuncs);
+		void						removeAllNonGlobals();
 		Variable*					getvariable(char * name);
+		Function*					getfunction(char * name);
 
+		std::vector<Function>		functions;
 		std::vector<Variable>		variables;
 		Lexer*						lexer;
 		int							stackSize;
+		int							maxStackSize;
 	};
 
 }

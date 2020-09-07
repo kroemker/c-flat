@@ -2,7 +2,8 @@
 
 namespace cflat
 {
-	Variable::Variable(DataType type, char* name, int stackSlot) : name(name), type(type), stackSlot(stackSlot)
+	Variable::Variable(DataType type, char* name, int stackSlot, bool global) 
+		: name(name), type(type), stackSlot(stackSlot), global(global)
 	{
 	}
 

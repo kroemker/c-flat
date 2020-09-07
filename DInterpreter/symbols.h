@@ -6,7 +6,7 @@ namespace cflat
 #define ID_SIZE_LIMIT	64
 #define TOKENTYPES		8
 #define KEYWORDTYPES	512
-#define KEYWORDCOUNT	21
+#define KEYWORDCOUNT	22
 
 #define SAFEDEL(p) if(p)delete p; p = NULL
 
@@ -54,6 +54,7 @@ namespace cflat
 		T_F32,
 		INT,
 		FLOAT,
+		FUNCTION,
 	};
 
 	static const char* keywords_s[] =
@@ -76,38 +77,33 @@ namespace cflat
 		"f32",
 		"int",
 		"float",
+		"function",
 	};
 
 	enum exceptions
 	{
-		ASSIGNORFUNCTIONCALL_EXPECTED = 0,
+		SYNTAX_ERROR = 0,
 		CLOSEBRACKET_EXPECTED,
+		OPENBRACKET_EXPECTED,
 		UNDEFINED_SYMBOL,
 		SEMICOLON_EXPECTED,
-		BOOLEANILLEGALLYFOUND,
-		TYPEINCONGRUENCE,
-		BOOLEANOPERATORTYPEFAULT,
-		THENEXPECTED,
-		DOEXPECTED,
 		ID_EXPECTED,
 		SYMBOL_REDEFINITION,
-		INVALID_CHARACTER
+		INVALID_CHARACTER,
+		DECLARATION_EXPECTED
 	};
 
-	static const char* texceptions_s[] =
+	static const char* exceptions_s[] =
 	{
-		"ASSIGN ':=' Symbol oder Funktionsaufruf wurde erwartet, konnte aber nicht erkannt werden!",
-		"CLOSEBRACKET ')' Symbol wurde erwartet, aber nicht gefunden!",
-		"UNDEFINED SYMBOL; Ein Symbol wurde gefunden, konnte aber nicht aufgelöst werden!",
-		"SEMICOLON ';' Symbol wurde erwartet, aber nicht gefunden!",
-		"BOOLEAN ILLEGALLY FOUND; Booleescher Typ wurde gefunden, aber nicht erwartet!",
-		"TYPEINCONGRUENCE; Typen sind nicht gleich und können nicht bearbeitet werden!",
-		"BOOLEAN OPERATOR TYPE FAULT; Der Operator ist nur auf booleesche Typen anwendbar!",
-		"THEN EXPECTED; Das THEN-Schlüsselwort wurde erwartet, aber nicht gefunden!",
-		"DO EXPECTED; Das DO-Schlüsselwort wurde erwartet, aber nicht gefunden!",
+		"Syntax Error",
+		"')' expected",
+		"'(' expected",
+		"Undefined Symbol",
+		"';' expected",
 		"Identifier expected",
 		"Redefinition of symbol",
-		"Invalid character found"
+		"Invalid character found",
+		"Declaration expected"
 	};
 
 	enum DataType
@@ -119,7 +115,8 @@ namespace cflat
 		S8,
 		S16,
 		S32,
-		F32
+		F32,
+		FUNC
 	};
 
 	static int typesizes[] =
@@ -177,6 +174,8 @@ namespace cflat
 		J,
 		JT,
 		JF,
+		CL,
+		CLE,
 		// conversion
 		CTF,
 		CTI,
@@ -227,6 +226,8 @@ namespace cflat
 		"J",
 		"JT",
 		"JF",
+		"CL",
+		"CLE",
 		// conversion
 		"CTF",
 		"CTI",
@@ -244,7 +245,7 @@ namespace cflat
 		2, 3, 3, 3, // bit
 		3, 3, 3, // logical
 		3, 3, 3, 3, 3, 3, // relational
-		1, 2, 2, // jump
+		1, 2, 2, 1, 1, // jump
 		2, 2, // conversion
 		0
 	};

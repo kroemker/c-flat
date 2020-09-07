@@ -54,6 +54,9 @@
     <ClInclude Include="Instruction.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="function.h">
+      <Filter>Headerdateien\Lower Classes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Lexer.cpp">

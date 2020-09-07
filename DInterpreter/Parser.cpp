@@ -1,12 +1,13 @@
 #include "Parser.h"
 
-#define PUSH(name)	name = stackSize; stackSize += 4
-#define POP()		stackSize -= 4
+#define PUSH_GLOBAL()	{ stackSize += 4; maxStackSize = stackSize > maxStackSize ? stackSize : maxStackSize; }
+#define PUSH(name)		{ name = stackSize; stackSize += 4; maxStackSize = stackSize > maxStackSize ? stackSize : maxStackSize; }
+#define POP()			{ stackSize -= 4; }
 
 namespace cflat
 {
 
-	Parser::Parser(Lexer* lexer) : lexer(lexer), stackSize(0)
+	Parser::Parser(Lexer* lexer) : lexer(lexer), stackSize(0), maxStackSize(0)
 	{
 		if (!lexer->isPrelexed())
 			lexer->prelex();
@@ -20,11 +21,12 @@ namespace cflat
 	{
 		try
 		{
-			stmts();
+			if (decl(true) == DataType::NO_TYPE)
+				throw exceptions::DECLARATION_EXPECTED;
 		}
 		catch (exceptions i)
 		{
-			Exception* e = new Exception(i, lexer->getExpressionCount(), lexer->look()->getline());
+			Exception* e = new Exception(i, lexer->getExpressionCount(), lexer->look());
 			lexer->next();
 			return e;
 		}
@@ -33,7 +35,6 @@ namespace cflat
 
 	void Parser::stmts()
 	{
-		decls(false);
 		Token* t0 = lexer->look();
 		if (t0->gettype() == ';')
 		{
@@ -96,112 +97,33 @@ namespace cflat
 				DataType t = boolexpr(v->getstackslot());
 				forcedTypecast(v->gettype(), t, v->getstackslot());
 			}
-			/*else if (t1->gettype() == '(')
+			else if (t1->gettype() == '(')
 			{
 				lexer->next();
+				if (lexer->look()->gettype() != ')')
+					throw exceptions::CLOSEBRACKET_EXPECTED;
 				Identifier* i0 = dynamic_cast<Identifier*>(t0);
-				if (lexer->look()->gettype() == TokenTypes::STRING)
+				Function* f = getfunction(i0->get());
+				if (f)
 				{
-					if (strcmp(i0->get(), "print") == 0)
-					{
-						Stringlit* s = dynamic_cast<Stringlit*>(lexer->look());
-						std::cout << s->get();
-						lexer->next();
-						if (lexer->look()->gettype() != ')')
-							throw exceptions::CLOSEBRACKET_EXPECTED;
-					}
-					else if (strcmp(i0->get(), "println") == 0)
-					{
-						Stringlit* s = dynamic_cast<Stringlit*>(lexer->look());
-						std::cout << s->get() << '\n';
-						lexer->next();
-						if (lexer->look()->gettype() != ')')
-							throw exceptions::CLOSEBRACKET_EXPECTED;
-
-					}
-					else
-						throw exceptions::UNDEFINED_SYMBOL;
+					instructions.push_back(Instruction(Opcodes::CL, Instruction::Arg(f->getaddress()), 0, 0));
 				}
 				else
-				{
-					if (strcmp(i0->get(), "intout") == 0)
-					{
-						Variable* k = mathexpr(DataType::RES_INTEGER, false);
-						std::cout << k->getival();
-						if (lexer->look()->gettype() != ')')
-							throw exceptions::CLOSEBRACKET_EXPECTED;
-					}
-					else if (strcmp(i0->get(), "realout") == 0)
-					{
-						Variable* k = mathexpr(DataType::RES_FLOAT, false);
-						std::cout << k->getrval();
-						if (lexer->look()->gettype() != ')')
-							throw exceptions::CLOSEBRACKET_EXPECTED;
-					}
-					else if (strcmp(i0->get(), "boolout") == 0)
-					{
-						Variable* k = boolexpr();
-						if (k->getbval() == true)
-							std::cout << "true";
-						else
-							std::cout << "false";
-						if (lexer->look()->gettype() != ')')
-							throw exceptions::CLOSEBRACKET_EXPECTED;
-					}
-					else if (strcmp(i0->get(), "in") == 0)
-					{
-						std::list<Variable*>::iterator iter;
-						Variable* v = NULL;
-						for (iter = variables.begin(); iter != variables.end(); iter++)
-						{
-							if (strcmp(dynamic_cast<Identifier*>(lexer->look())->get(), (*iter)->getname()) == 0)
-							{
-								v = (*iter);
-								break;
-							}
-						}
-						if (v == NULL)
-							throw exceptions::UNDEFINED_SYMBOL;
-						if (v->gettype() == DataType::RES_BOOLEAN)
-						{
-							bool b = false;
-							std::cin >> b;
-							v->setval(b);
-						}
-						else if (v->gettype() == DataType::RES_INTEGER)
-						{
-							int i = 0;
-							std::cin >> i;
-							v->setval(i);
-						}
-						else if (v->gettype() == DataType::RES_FLOAT)
-						{
-							REALNUM r = 0;
-							std::cin >> r;
-							v->setval(r);
-						}
-						lexer->next();
-						if (lexer->look()->gettype() != ')')
-							throw exceptions::CLOSEBRACKET_EXPECTED;
-					}
-					else if (strcmp(i0->get(), "wait") == 0)
-					{
-						system("PAUSE");
-						if (lexer->look()->gettype() != ')')
-							throw exceptions::CLOSEBRACKET_EXPECTED;
-					}
-				}
+					throw exceptions::UNDEFINED_SYMBOL;
 				lexer->next();
-			}*/
+			}
 			else
-				throw exceptions::ASSIGNORFUNCTIONCALL_EXPECTED;
+				throw exceptions::SYNTAX_ERROR;
 
 			if (lexer->look()->gettype() != ';')
 				throw exceptions::SEMICOLON_EXPECTED;
 			lexer->next();
 		}
 		else
-			throw exceptions::INVALID_CHARACTER;
+		{
+			if (decl(false) == DataType::NO_TYPE)
+				throw exceptions::INVALID_CHARACTER;
+		}
 	}
 
 	DataType Parser::boolexpr(int stackSlot)
@@ -590,7 +512,7 @@ namespace cflat
 		}
 		case TokenTypes::INT_LITERAL:
 		{
-			instructions.push_back(Instruction(Opcodes::LDI, 
+			instructions.push_back(Instruction(Opcodes::LDI,
 				Instruction::Arg(stackSlot),
 				Instruction::Arg(dynamic_cast<Integer*>(lexer->look())->getvalue()), 0));
 			lexer->next();
@@ -609,7 +531,7 @@ namespace cflat
 			instructions.push_back(Instruction(Opcodes::LDI,
 				Instruction::Arg(stackSlot),
 				Instruction::Arg(~0), 0));
-			lexer->next(); 
+			lexer->next();
 			return DataType::S32;
 		}
 		case Keywords::FALSE:
@@ -695,7 +617,7 @@ namespace cflat
 				Instruction::Arg(0xFF), 0));
 			instructions.push_back(Instruction(Opcodes::BAND,
 				Instruction::Arg(tSlot),
-				Instruction::Arg(tSlot), 
+				Instruction::Arg(tSlot),
 				Instruction::Arg(immValSlot)));
 		}
 		else if (t == DataType::S16 || t == DataType::U16)
@@ -714,18 +636,16 @@ namespace cflat
 		}
 	}
 
-	void Parser::decls(bool allowFuncs)
+	void Parser::decls(bool global)
 	{
-		int declType;
-		while ((declType = decl(allowFuncs)) != 0)
+		DataType declType;
+		while ((declType = decl(global)) != NO_TYPE)
 		{
-			if (declType != 255 && lexer->look()->gettype() != ';')
-				throw exceptions::SEMICOLON_EXPECTED;
 			lexer->next();
 		}
 	}
 
-	int Parser::decl(bool allowFuncs)
+	DataType Parser::decl(bool global)
 	{
 		DataType varType = DataType::NO_TYPE;
 		Token* t1 = lexer->look();
@@ -743,8 +663,10 @@ namespace cflat
 			varType = DataType::S32;
 		else if (t1->gettype() == Keywords::T_F32 || t1->gettype() == Keywords::FLOAT)
 			varType = DataType::F32;
+		else if (global && t1->gettype() == Keywords::FUNCTION)
+			varType = DataType::FUNC;
 
-		if (varType != 0)
+		if (varType != DataType::NO_TYPE)
 		{
 			lexer->next();
 			Token* t2 = lexer->look();
@@ -755,14 +677,53 @@ namespace cflat
 				if (v)
 					throw exceptions::SYMBOL_REDEFINITION;
 
-				variables.push_back(Variable(varType, ident, stackSize));
-				stackSize += 4; // every type is 32 bits wide
+				if (varType == DataType::FUNC)
+				{
+					lexer->next();
+					if (lexer->look()->gettype() != '(')
+						throw exceptions::OPENBRACKET_EXPECTED;
+					lexer->next();
+					if (lexer->look()->gettype() != ')')
+						throw exceptions::CLOSEBRACKET_EXPECTED;
+					lexer->next();
+
+					int functionStart = instructions.size();
+					int functionStack = stackSize;
+					functions.push_back(Function(ident, functionStart, false));
+					instructions.push_back(Instruction(Opcodes::PUSH, 0, 0, 0));
+					stmts();
+					instructions[functionStart].set(Opcodes::PUSH, Instruction::Arg(maxStackSize - functionStack), 0, 0);
+					instructions.push_back(Instruction(Opcodes::POP, Instruction::Arg(maxStackSize - functionStack), 0, 0));
+					maxStackSize = functionStack;
+					stackSize = functionStack;
+					removeAllNonGlobals();
+				}
+				else
+				{
+					variables.push_back(Variable(varType, ident, stackSize, global));
+					PUSH_GLOBAL();
+					lexer->next();
+					if (lexer->look()->gettype() != ';')
+						throw exceptions::SEMICOLON_EXPECTED;
+					lexer->next();
+				}
 			}
 			else
 				throw exceptions::ID_EXPECTED;
-			lexer->next();
 		}
 		return varType;
+	}
+
+	void Parser::removeAllNonGlobals()
+	{
+		auto it = variables.begin();
+		while (it != variables.end())
+		{
+			if (!it->isglobal())
+				it = variables.erase(it);
+			else
+				++it;
+		}
 	}
 
 	Variable* Parser::getvariable(char* name)
@@ -771,6 +732,16 @@ namespace cflat
 		{
 			if (strcmp(name, variables[i].getname()) == 0)
 				return &variables[i];
+		}
+		return NULL;
+	}
+
+	Function* Parser::getfunction(char* name)
+	{
+		for (int i = 0; i < functions.size(); i++)
+		{
+			if (strcmp(name, functions[i].getname()) == 0)
+				return &functions[i];
 		}
 		return NULL;
 	}

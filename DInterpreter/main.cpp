@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
 			{
 				exc = parser->parsenext();
 				if (exc != NULL)
-					cout << "\n" << "Line: " << exc->getline() << ", Expression: " << exc->getexprnum() << "\nError: " << exc->tostring() << "\n";
+					cout << "\n" << "Line: " << exc->gettoken()->getline() << ", Expression: " << exc->getexprnum() << " @ " << exc->gettoken()->tostring() << "\nError: " << exc->tostring() << "\n";
 			}
 			for (int i = 0; i < parser->instructions.size(); i++)
 			{

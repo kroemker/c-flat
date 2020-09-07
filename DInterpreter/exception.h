@@ -1,6 +1,7 @@
 #pragma once
 
 #include "symbols.h"
+#include "token.h"
 
 namespace cflat
 {
@@ -8,16 +9,16 @@ namespace cflat
 	class Exception
 	{
 	public:
-		Exception(int type, int exprn, int line) { this->type = type; exprnum = exprn; this->line = line; }
+		Exception(int type, int exprn, Token* token) : type(type), exprnum(exprn), token(token) {}
 		virtual		~Exception(void) {};
 		int			gettype() { return type; }
-		int			getline() { return line; }
+		Token*		gettoken() { return token; }
 		int			getexprnum() { return exprnum; }
-		const char*	tostring() { return texceptions_s[type]; }
+		const char*	tostring() { return exceptions_s[type]; }
 	private:
 		int type;
 		int exprnum;
-		int line;
+		Token* token;
 	};
 
 }
