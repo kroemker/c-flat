@@ -3,7 +3,7 @@
 namespace cflat
 {
 
-	Integer::Integer(int v) : Token(ttypes::INTEGER), value(v)
+	Integer::Integer(int v) : Token(TokenTypes::INT_LITERAL), value(v)
 	{
 	}
 

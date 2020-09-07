@@ -51,6 +51,9 @@
     <ClInclude Include="variable.h">
       <Filter>Headerdateien\Lower Classes</Filter>
     </ClInclude>
+    <ClInclude Include="Instruction.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Lexer.cpp">
@@ -80,8 +83,8 @@
     <ClCompile Include="variable.cpp">
       <Filter>Quelldateien\Lower Classes</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\Debug\test.pas" />
+    <ClCompile Include="Instruction.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

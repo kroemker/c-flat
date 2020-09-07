@@ -3,7 +3,7 @@
 namespace cflat
 {
 
-	Identifier::Identifier(char c) : Token(ttypes::ID)
+	Identifier::Identifier(char c) : Token(TokenTypes::ID)
 	{
 		position = 1;
 		buffer = NULL;

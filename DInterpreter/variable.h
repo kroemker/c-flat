@@ -5,23 +5,18 @@
 namespace cflat
 {
 
-class Variable
-{
-public:
-	Variable(int t,char* n);
-	virtual ~Variable(void);
-	bool    getbval();
-	int		getival();
-	REALNUM	getrval();
-	void	setval(bool b);
-	void	setval(int i);
-	void	setval(REALNUM r);
-	int		gettype() { return type; }
-	char*	getname() { return name; }
-private:
-	char*	 name;
-	void*	 val;
-	int		 type; 
-};
+	class Variable
+	{
+	public:
+		Variable(DataType type, char* name, int stackSlot);
+		virtual ~Variable(void);
+		DataType	gettype() { return type; }
+		char*	getname() { return name; }
+		int		getstackslot() { return stackSlot; }
+	private:
+		char*	 name;
+		DataType	 type;
+		int		 stackSlot;
+	};
 
 }

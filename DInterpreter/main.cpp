@@ -12,34 +12,38 @@ int main(int argc, char* argv[])
 {
 	if (argc > 1)
 	{
-		int iSourceSize = 0;
-		FILE*   sSource;
-		sSource = fopen(argv[1], "rb");
-		if (sSource)
+		int fileSize = 0;
+		FILE*   f;
+		f = fopen(argv[1], "rb");
+		if (f)
 		{
-			fseek(sSource, 0, SEEK_END);
-			iSourceSize = ftell(sSource);
-			fseek(sSource, 0, SEEK_SET);
+			fseek(f, 0, SEEK_END);
+			fileSize = ftell(f);
+			fseek(f, 0, SEEK_SET);
 
-			char* pRawContent = new char[iSourceSize + 1];
-			fread(pRawContent, 1, iSourceSize, sSource);
-			pRawContent[iSourceSize] = '\0';
-			fclose(sSource);
+			char* content = new char[fileSize + 1];
+			fread(content, 1, fileSize, f);
+			content[fileSize] = '\0';
+			fclose(f);
 
-			Lexer*	pLexer = new Lexer(pRawContent, iSourceSize);
-			pLexer->prelex();
-
-			Parser*	pParser = new Parser(pLexer);
-			cflat::Exception*	exc;
-			while (!pLexer->isEndOfTokenList())
+			Lexer* lexer = new Lexer(content, fileSize);
+			lexer->prelex();
+			Parser* parser = new Parser(lexer);
+			cflat::Exception* exc;
+			while (!lexer->isEndOfTokenList())
 			{
-				exc = pParser->parsenext();
+				exc = parser->parsenext();
 				if (exc != NULL)
 					cout << "\n" << "Line: " << exc->getline() << ", Expression: " << exc->getexprnum() << "\nError: " << exc->tostring() << "\n";
 			}
-			SAFEDEL(pLexer);
-			SAFEDEL(pParser);
-			delete[] pRawContent;
+			for (int i = 0; i < parser->instructions.size(); i++)
+			{
+				cout << i << ":\t";
+				parser->instructions[i].print();
+			}
+			SAFEDEL(lexer);
+			SAFEDEL(parser);
+			delete[] content;
 		}
 		else
 			cout << argv[1] << " could not be opened!";

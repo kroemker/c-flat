@@ -26,7 +26,7 @@ namespace cflat
 		bool	isEndOfTokenList() { return(tokens.size() == tokenIndex); }
 		bool	isPrelexed() { return prelexed; }
 	private:
-		bool				isready() { return inputIndex == inputLength; }
+		bool				isready() { return inputIndex >= inputLength; }
 		Token*				getnexttoken();
 		std::vector<Token*>	tokens;
 		char*				input;

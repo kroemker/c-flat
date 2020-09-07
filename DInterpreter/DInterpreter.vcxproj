@@ -89,6 +89,7 @@
   <ItemGroup>
     <ClInclude Include="exception.h" />
     <ClInclude Include="identifier.h" />
+    <ClInclude Include="Instruction.h" />
     <ClInclude Include="integer.h" />
     <ClInclude Include="Lexer.h" />
     <ClInclude Include="Parser.h" />
@@ -100,6 +101,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="identifier.cpp" />
+    <ClCompile Include="Instruction.cpp" />
     <ClCompile Include="integer.cpp" />
     <ClCompile Include="Lexer.cpp" />
     <ClCompile Include="main.cpp" />
@@ -108,9 +110,6 @@
     <ClCompile Include="stringlit.cpp" />
     <ClCompile Include="token.cpp" />
     <ClCompile Include="variable.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\Debug\test.pas" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -7,16 +7,16 @@
 namespace cflat
 {
 
-class Real : public Token
-{
-public:
-	Real(REALNUM v);
-	virtual ~Real(void){};
-	void				setvalue(REALNUM v){value = v;}
-	REALNUM				getvalue(){return value;}
-	virtual const char*	tostring();
-private:
-	REALNUM value;
-};
+	class Float : public Token
+	{
+	public:
+		Float(float v);
+		virtual ~Float(void) {};
+		void				setvalue(float v) { value = v; }
+		float				getvalue() { return value; }
+		virtual const char*	tostring();
+	private:
+		float value;
+	};
 
 }

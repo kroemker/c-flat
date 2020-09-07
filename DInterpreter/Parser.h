@@ -2,6 +2,7 @@
 
 #include <map>
 #include <list>
+#include "Instruction.h"
 #include "symbols.h"
 #include "Lexer.h"
 #include "variable.h" 
@@ -14,23 +15,31 @@ namespace cflat
 	class Parser
 	{
 	public:
-		Parser(Lexer* pLex);
+		Parser(Lexer* lexer);
+		~Parser(void);
+
 		Exception*	parsenext();
-		virtual ~Parser(void);
+
+		std::vector<Instruction>	instructions;
 	private:
-		Variable*					boolexpr();
-		Variable*					joinexpr();
-		Variable*					equalityexpr();
-		Variable*					relexpr();
-		Variable*					mathexpr(int numerictype, bool isboolexpr);
-		Variable*					mathterm(int numerictype, bool isboolexpr);
-		Variable*					mathunary(int numerictype, bool isboolexpr);
-		Variable*					factor(int numerictype, bool isboolexpr);
+		DataType					boolexpr(int stackSlot);
+		DataType					joinexpr(int stackSlot);
+		DataType					equalityexpr(int stackSlot);
+		DataType					relexpr(int stackSlot);
+		DataType					mathexpr(int stackSlot);
+		DataType					mathterm(int stackSlot);
+		DataType					mathunary(int stackSlot);
+		DataType					factor(int stackSlot);
+		DataType					generalizedTypecast(DataType t, DataType s, int tSlot, int sSlot);
+		void						forcedTypecast(DataType t, DataType s, int tSlot);
 		void						stmts();
-		int							decl();
-		void						decls();
-		std::list<Variable*>		variables;
+		int							decl(bool allowFuncs);
+		void						decls(bool allowFuncs);
+		Variable*					getvariable(char * name);
+
+		std::vector<Variable>		variables;
 		Lexer*						lexer;
+		int							stackSize;
 	};
 
 }

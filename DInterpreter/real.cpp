@@ -3,12 +3,12 @@
 namespace cflat
 {
 
-Real::Real(REALNUM v) : Token(ttypes::REALLIT)
+Float::Float(float v) : Token(TokenTypes::FLOAT_LITERAL)
 {
 	value = v;
 }
 
-const char* Real::tostring()
+const char* Float::tostring()
 {
 	char* s = new char[16]; 
 	sprintf(s,"%f",value); 

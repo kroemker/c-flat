@@ -79,7 +79,7 @@ namespace cflat
 			if (!isready() && input[inputIndex] == '=')
 			{
 				inputIndex++;
-				return new Token(ttypes::EQUALS);
+				return new Token(TokenTypes::EQUALS);
 			}
 			else
 				return new Token('=');
@@ -88,7 +88,7 @@ namespace cflat
 			if (input[inputIndex] == '=')
 			{
 				inputIndex++;
-				return new Token(ttypes::UNEQUALS);
+				return new Token(TokenTypes::UNEQUALS);
 			}
 			else
 				return new Token('!');
@@ -97,7 +97,7 @@ namespace cflat
 			if (input[inputIndex] == '=')
 			{
 				inputIndex++;
-				return new Token(ttypes::LESS_EQUALS);
+				return new Token(TokenTypes::LESS_EQUALS);
 			}
 			else
 				return new Token('<');
@@ -106,7 +106,7 @@ namespace cflat
 			if (input[inputIndex] == '=')
 			{
 				inputIndex++;
-				return new Token(ttypes::GREATER_EQUALS);
+				return new Token(TokenTypes::GREATER_EQUALS);
 			}
 			else
 				return new Token('>');
@@ -150,7 +150,7 @@ namespace cflat
 				buffer[i] = input[start + i];
 			buffer[inputIndex - start] = '\0';
 			if (isReal)
-				return new Real(atof(buffer));
+				return new Float(atof(buffer));
 			else
 				return new Integer(atoi(buffer));
 		}

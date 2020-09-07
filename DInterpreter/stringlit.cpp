@@ -3,7 +3,7 @@
 namespace cflat
 {
 
-	Stringlit::Stringlit(void) : Token(ttypes::STRING)
+	Stringlit::Stringlit(void) : Token(TokenTypes::STRING)
 	{
 		position = 0;
 		buffer = NULL;
