@@ -29,3 +29,21 @@ void cflat::Instruction::print()
 		std::cout << ", " << a2.i;
 	std::cout << "\n";
 }
+
+void cflat::Instruction::translatePlaceholder(int placeholderStackStart, int translation)
+{
+	if (opcode == Opcodes::PUSH || opcode == Opcodes::POP || opcode == Opcodes::CL || opcode == Opcodes::CLE)
+		return;
+
+	if (a0.i <= placeholderStackStart)
+		a0.i += -placeholderStackStart + translation;
+
+	if (opcode == Opcodes::LDI || opcode == Opcodes::LDF)
+		return;
+
+	if (a1.i <= placeholderStackStart)
+		a1.i += -placeholderStackStart + translation;
+
+	if (a2.i <= placeholderStackStart)
+		a2.i += -placeholderStackStart + translation;
+}

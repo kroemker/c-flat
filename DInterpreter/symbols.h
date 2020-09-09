@@ -1,12 +1,15 @@
 #pragma once
 
-namespace cflat
-{
+#define STACK_ENTRY_WIDTH	32
+#define STACK_ENTRY_SIZE	(STACK_ENTRY_WIDTH / 8)
 
 #define ID_SIZE_LIMIT	64
 #define TOKENTYPES		8
 #define KEYWORDTYPES	512
-#define KEYWORDCOUNT	22
+#define KEYWORDCOUNT	23
+
+namespace cflat
+{
 
 #define SAFEDEL(p) if(p)delete p; p = NULL
 
@@ -48,6 +51,7 @@ namespace cflat
 		NOT,
 		TRUE,
 		FALSE,
+		RETURN,
 		// DataType
 		T_U8, T_U16, T_U32,
 		T_S8, T_S16, T_S32,
@@ -71,6 +75,7 @@ namespace cflat
 		"not",
 		"true",
 		"false",
+		"return",
 		// DataType
 		"u8", "u16", "u32",
 		"s8", "s16", "s32",
@@ -85,12 +90,14 @@ namespace cflat
 		SYNTAX_ERROR = 0,
 		CLOSEBRACKET_EXPECTED,
 		OPENBRACKET_EXPECTED,
+		COMMA_EXPECTED,
 		UNDEFINED_SYMBOL,
 		SEMICOLON_EXPECTED,
 		ID_EXPECTED,
 		SYMBOL_REDEFINITION,
 		INVALID_CHARACTER,
-		DECLARATION_EXPECTED
+		DECLARATION_EXPECTED,
+		TYPE_EXPECTED
 	};
 
 	static const char* exceptions_s[] =
@@ -98,12 +105,14 @@ namespace cflat
 		"Syntax Error",
 		"')' expected",
 		"'(' expected",
+		"',' expected",
 		"Undefined Symbol",
 		"';' expected",
 		"Identifier expected",
 		"Redefinition of symbol",
 		"Invalid character found",
-		"Declaration expected"
+		"Declaration expected",
+		"Type expected",
 	};
 
 	enum DataType

@@ -35,16 +35,19 @@ namespace cflat
 		void						forcedTypecast(DataType t, DataType s, int tSlot);
 		void						stmts();
 		DataType					decl(bool allowFuncs);
+		DataType					datatype();
 		void						decls(bool allowFuncs);
+		void						functionCall(char* name);
 		void						removeAllNonGlobals();
-		Variable*					getvariable(char * name);
-		Function*					getfunction(char * name);
+		Variable*					getVariable(char * name);
+		Function*					getFunction(char * name);
 
 		std::vector<Function>		functions;
 		std::vector<Variable>		variables;
 		Lexer*						lexer;
-		int							stackSize;
-		int							maxStackSize;
+		int							globalStackSize;
+		int							localStackSize;
+		int							maxLocalStackSize;
 	};
 
 }
