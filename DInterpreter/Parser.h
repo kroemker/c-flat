@@ -37,7 +37,7 @@ namespace cflat
 		DataType					decl(bool allowFuncs);
 		DataType					datatype();
 		void						decls(bool allowFuncs);
-		void						functionCall(char* name);
+		int							functionCall(char* name);
 		void						removeAllNonGlobals();
 		Variable*					getVariable(char * name);
 		Function*					getFunction(char * name);
@@ -48,6 +48,7 @@ namespace cflat
 		int							globalStackSize;
 		int							localStackSize;
 		int							maxLocalStackSize;
+		int							placeholderStack;
 	};
 
 }

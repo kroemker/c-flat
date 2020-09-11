@@ -1,17 +1,21 @@
 #include "Parser.h"
 
-#define RESET_STACK_LOCAL()	{ localStackSize = maxLocalStackSize = 0; }
-#define PUSH_GLOBAL()		{ globalStackSize += STACK_ENTRY_SIZE; }
-#define PUSH_LOCAL()		{ localStackSize += STACK_ENTRY_SIZE; maxLocalStackSize = localStackSize > maxLocalStackSize ? localStackSize : maxLocalStackSize; }
-#define PUSH(name)			{ name = localStackSize; PUSH_LOCAL(); }
-#define POP()				{ localStackSize -= STACK_ENTRY_SIZE; }
+#define PLACEHOLDER_STACK_START		-200
+#define FUNCTION_END_LABEL			-3000
 
-#define ARGUMENT_PLACEHOLDER_START	-200
+#define PUSH_PLACEHOLDER()			{ placeholderStack -= STACK_ENTRY_SIZE; }
+#define RESET_PLACEHOLDER_STACK()	{ placeholderStack = PLACEHOLDER_STACK_START; }
+#define RESET_STACK_LOCAL()			{ localStackSize = maxLocalStackSize = 0; }
+#define PUSH_RETURN_VALUE(name)		{ name = maxReturnValues; maxReturnValues++; }
+#define PUSH_GLOBAL()				{ globalStackSize += STACK_ENTRY_SIZE; }
+#define PUSH_LOCAL()				{ localStackSize += STACK_ENTRY_SIZE; maxLocalStackSize = localStackSize > maxLocalStackSize ? localStackSize : maxLocalStackSize; }
+#define PUSH(name)					{ name = localStackSize; PUSH_LOCAL(); }
+#define POP()						{ localStackSize -= STACK_ENTRY_SIZE; }
 
 namespace cflat
 {
 
-	Parser::Parser(Lexer* lexer) : lexer(lexer), localStackSize(0), maxLocalStackSize(0)
+	Parser::Parser(Lexer* lexer) : lexer(lexer), localStackSize(0), maxLocalStackSize(0), placeholderStack(PLACEHOLDER_STACK_START)
 	{
 		if (!lexer->isPrelexed())
 			lexer->prelex();
@@ -112,6 +116,17 @@ namespace cflat
 			if (lexer->look()->gettype() != ';')
 				throw exceptions::SEMICOLON_EXPECTED;
 			lexer->next();
+		}
+		else if (t0->gettype() == Keywords::RETURN)
+		{
+			lexer->next();
+			boolexpr(PLACEHOLDER_STACK_START);
+			instructions.push_back(Instruction(Opcodes::J, Instruction::Arg(FUNCTION_END_LABEL), 0, 0));
+
+			if (lexer->look()->gettype() != ';')
+				throw exceptions::SEMICOLON_EXPECTED;
+			lexer->next();
+
 		}
 		else if (decl(false) == DataType::NO_TYPE)
 			throw exceptions::INVALID_CHARACTER;
@@ -540,7 +555,11 @@ namespace cflat
 			lexer->next();
 			if (lexer->look()->gettype() == '(')
 			{
-				functionCall(ident);
+				int retSlot = functionCall(ident);
+				instructions.push_back(Instruction(Opcodes::MW,
+					Instruction::Arg(stackSlot),
+					Instruction::Arg(retSlot), 0));
+				return DataType::S32; // FIXME: make functions typed
 			}
 			else
 			{
@@ -569,41 +588,48 @@ namespace cflat
 		throw exceptions::UNDEFINED_SYMBOL;
 	}
 
-	void Parser::functionCall(char* name)
+	int Parser::functionCall(char* name)
 	{
 		Function* f = getFunction(name);
-		if (f)
-		{
-			int nargs = 0;
-			int pid = instructions.size();
-
-			lexer->next();
-			while (lexer->look()->gettype() != ')')
-			{
-				if (nargs > 0)
-				{
-					if (lexer->look()->gettype() != ',')
-						throw exceptions::COMMA_EXPECTED;
-					lexer->next();
-				}
-				nargs++;
-				boolexpr(-nargs * STACK_ENTRY_SIZE);
-			}
-			instructions.push_back(Instruction(Opcodes::LDI, Instruction::Arg(-(nargs + 1) * STACK_ENTRY_SIZE), Instruction::Arg(nargs), 0));
-
-			instructions.push_back(Instruction(Opcodes::PUSH, Instruction::Arg((nargs + 1) * STACK_ENTRY_SIZE), 0, 0));
-
-			if (f->isExternal())
-				instructions.push_back(Instruction(Opcodes::CLE, Instruction::Arg(f->getAddress()), 0, 0));
-			else
-				instructions.push_back(Instruction(Opcodes::CL, Instruction::Arg(f->getAddress()), 0, 0));
-
-			instructions.push_back(Instruction(Opcodes::POP, Instruction::Arg((nargs + 1) * STACK_ENTRY_SIZE), 0, 0));
-		}
-		else
+		if (!f)
 			throw exceptions::UNDEFINED_SYMBOL;
 
+		// push return value space /// FIXME: for now only 1 return value
+		instructions.push_back(Instruction(Opcodes::PUSH, Instruction::Arg(STACK_ENTRY_SIZE), 0, 0));
+
+		// push argument space
+		int nargs = 0;
+		int pid = instructions.size();
+
 		lexer->next();
+		while (lexer->look()->gettype() != ')')
+		{
+			if (nargs > 0)
+			{
+				if (lexer->look()->gettype() != ',')
+					throw exceptions::COMMA_EXPECTED;
+				lexer->next();
+			}
+			nargs++;
+			boolexpr(-nargs * STACK_ENTRY_SIZE);
+		}
+		
+		instructions.push_back(Instruction(Opcodes::LDI, Instruction::Arg(-(nargs + 1) * STACK_ENTRY_SIZE), Instruction::Arg(nargs), 0));
+
+		instructions.push_back(Instruction(Opcodes::PUSH, Instruction::Arg((nargs + 1) * STACK_ENTRY_SIZE), 0, 0));
+
+		if (f->isExternal())
+			instructions.push_back(Instruction(Opcodes::CLE, Instruction::Arg(f->getAddress()), 0, 0));
+		else
+			instructions.push_back(Instruction(Opcodes::CL, Instruction::Arg(f->getAddress()), 0, 0));
+
+		instructions.push_back(Instruction(Opcodes::POP, Instruction::Arg((nargs + 1) * STACK_ENTRY_SIZE), 0, 0));
+
+		instructions.push_back(Instruction(Opcodes::POP, Instruction::Arg(STACK_ENTRY_SIZE), 0, 0));
+
+		lexer->next();
+
+		return -4;
 	}
 
 	DataType Parser::generalizedTypecast(DataType t, DataType s, int tSlot, int sSlot)
@@ -731,6 +757,10 @@ namespace cflat
 				if (lexer->look()->gettype() != '(')
 					throw exceptions::OPENBRACKET_EXPECTED;
 
+				// push return value placeholder
+				PUSH_PLACEHOLDER();
+
+				// parse arguments
 				lexer->next();
 				while (lexer->look()->gettype() != ')')
 				{
@@ -750,7 +780,8 @@ namespace cflat
 						throw exceptions::ID_EXPECTED;
 
 					variables.push_back(Variable(argType, dynamic_cast<Identifier*>(argNameId)->get(),
-						ARGUMENT_PLACEHOLDER_START - (nargs * STACK_ENTRY_SIZE), false));
+						placeholderStack, false));
+					PUSH_PLACEHOLDER();
 					nargs++;
 
 					lexer->next();
@@ -759,22 +790,35 @@ namespace cflat
 
 				// push arg count
 				variables.push_back(Variable(DataType::U32, "__argc",
-					ARGUMENT_PLACEHOLDER_START - (nargs * STACK_ENTRY_SIZE), false));
+					placeholderStack, false));
+				PUSH_PLACEHOLDER();
+
+				// push return address (don't push on placeholder stack, since it is the last element)
+				variables.push_back(Variable(DataType::U32, "__ra",
+					placeholderStack, false));
 
 				functions.push_back(Function(ident, functionStart, false));
 				instructions.push_back(Instruction(Opcodes::PUSH, 0, 0, 0));
+
+				// do function
 				stmts();
+
+				// update stack size
 				instructions[functionStart].set(Opcodes::PUSH, Instruction::Arg(maxLocalStackSize), 0, 0);
+				int functionEnd = instructions.size();
 				instructions.push_back(Instruction(Opcodes::POP, Instruction::Arg(maxLocalStackSize), 0, 0));
+				instructions.push_back(Instruction(Opcodes::JR, 0, 0, 0));
 
 				// replace argument addresses
 				for (int i = functionStart; i < instructions.size(); i++)
 				{
-					instructions[i].translatePlaceholder(ARGUMENT_PLACEHOLDER_START, maxLocalStackSize + (nargs * STACK_ENTRY_SIZE));
+					instructions[i].updateJumpTarget(FUNCTION_END_LABEL, functionEnd);
+					instructions[i].translatePlaceholder(PLACEHOLDER_STACK_START, -placeholderStack + maxLocalStackSize);
 				}
 
 				// reset stack and remove globals
 				RESET_STACK_LOCAL();
+				RESET_PLACEHOLDER_STACK();
 				removeAllNonGlobals();
 			}
 			else

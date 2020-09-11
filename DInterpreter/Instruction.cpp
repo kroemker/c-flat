@@ -36,14 +36,23 @@ void cflat::Instruction::translatePlaceholder(int placeholderStackStart, int tra
 		return;
 
 	if (a0.i <= placeholderStackStart)
-		a0.i += -placeholderStackStart + translation;
+		a0.i += translation;
 
 	if (opcode == Opcodes::LDI || opcode == Opcodes::LDF)
 		return;
 
 	if (a1.i <= placeholderStackStart)
-		a1.i += -placeholderStackStart + translation;
+		a1.i += translation;
 
 	if (a2.i <= placeholderStackStart)
-		a2.i += -placeholderStackStart + translation;
+		a2.i += translation;
+}
+
+void cflat::Instruction::updateJumpTarget(int before, int after)
+{
+	if (opcode == Opcodes::J && a0.i == before)
+		a0 = after;
+	
+	if ((opcode == Opcodes::JT || opcode == Opcodes::JF) && a1.i == before)
+		a1 = after;
 }

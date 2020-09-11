@@ -183,6 +183,7 @@ namespace cflat
 		J,
 		JT,
 		JF,
+		JR,
 		CL,
 		CLE,
 		// conversion
@@ -235,6 +236,7 @@ namespace cflat
 		"J",
 		"JT",
 		"JF",
+		"JR",
 		"CL",
 		"CLE",
 		// conversion
@@ -254,7 +256,7 @@ namespace cflat
 		2, 3, 3, 3, // bit
 		3, 3, 3, // logical
 		3, 3, 3, 3, 3, 3, // relational
-		1, 2, 2, 1, 1, // jump
+		1, 2, 2, 0, 1, 1, // jump
 		2, 2, // conversion
 		0
 	};

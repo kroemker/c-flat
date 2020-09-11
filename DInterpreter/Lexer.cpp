@@ -59,6 +59,11 @@ namespace cflat
 						line++;
 				}
 			}
+			else
+			{
+				inputIndex++;
+				return new Token('/');
+			}
 			inputIndex++;
 			return getnexttoken();
 		case '\"':
