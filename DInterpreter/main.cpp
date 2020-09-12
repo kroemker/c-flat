@@ -29,26 +29,33 @@ int main(int argc, char* argv[])
 			Lexer* lexer = new Lexer(content, fileSize);
 			lexer->prelex();
 			Parser* parser = new Parser(lexer);
-			cflat::Exception* exc;
-			while (!lexer->isEndOfTokenList())
-			{
-				exc = parser->parsenext();
-				if (exc != NULL)
-					cout << "\n" << "Line: " << exc->gettoken()->getline() << ", Expression: " << exc->getexprnum() << " @ " << exc->gettoken()->tostring() << "\nError: " << exc->tostring() << "\n";
-			}
+			parser->parse();
+			if (parser->isError())
+				printf("%s\n", parser->getErrorString());
 			for (int i = 0; i < parser->instructions.size(); i++)
 			{
-				cout << i << ":\t";
+				printf("%d:\t", i);
 				parser->instructions[i].print();
 			}
+			// execute
+			printf("\nExecution:\n");
+			Stack stack = NULL;
+			parser->instructions[0].execute(&stack);
+			do
+			{
+				printf("PC: %02d , SP: %03d \t", PC, SP);
+				parser->instructions[PC].print();
+				parser->instructions[PC].execute(&stack);
+			} while (stack != NULL);
+
 			SAFEDEL(lexer);
 			SAFEDEL(parser);
 			delete[] content;
 		}
 		else
-			cout << argv[1] << " could not be opened!";
+			printf("%s could not be opened!", argv[1]);
 	}
 	else
-		cout << "No file specified.";
+		printf("No file specified.");
 	return 0;
 }

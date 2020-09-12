@@ -18,8 +18,10 @@ namespace cflat
 	public:
 		Parser(Lexer* lexer);
 		~Parser(void);
-
+		void parse();
 		Exception*	parsenext();
+		char* getErrorString() { return errorString; }
+		bool isError() { return error; }
 
 		std::vector<Instruction>	instructions;
 	private:
@@ -42,13 +44,16 @@ namespace cflat
 		Variable*					getVariable(char * name);
 		Function*					getFunction(char * name);
 
+		Lexer*						lexer;
+		char						errorString[128];
+		bool						error;
 		std::vector<Function>		functions;
 		std::vector<Variable>		variables;
-		Lexer*						lexer;
 		int							globalStackSize;
 		int							localStackSize;
 		int							maxLocalStackSize;
 		int							placeholderStack;
+
 	};
 
 }

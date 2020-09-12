@@ -1,17 +1,43 @@
 #pragma once
 
+#include <cstring>
+
 #define STACK_ENTRY_WIDTH	32
 #define STACK_ENTRY_SIZE	(STACK_ENTRY_WIDTH / 8)
 
-#define ID_SIZE_LIMIT	64
-#define TOKENTYPES		8
-#define KEYWORDTYPES	512
-#define KEYWORDCOUNT	23
+#define STACK_SIZE			0x400
+#define STACK_NUM_VALUES	(STACK_SIZE / STACK_ENTRY_SIZE)
+
+#define SP				stack[STACK_NUM_VALUES - 1].i
+#define PC				stack[STACK_NUM_VALUES - 2].i
+#define STACK(n)		stack[SP + ((n) / STACK_ENTRY_SIZE)]
+#define GLOBAL(n)		stack[STACK_NUM_VALUES - ((n) / STACK_ENTRY_SIZE) - 1]
+
+#define ID_SIZE_LIMIT		64
+#define TOKENTYPES			8
+#define KEYWORDTYPES		512
+#define KEYWORDCOUNT		23
+
+#define SAFEDEL(p) if(p)delete p; p = NULL
 
 namespace cflat
 {
 
-#define SAFEDEL(p) if(p)delete p; p = NULL
+
+	union StackEntry
+	{
+		int i;
+		float f;
+		void* ptr;
+
+		StackEntry() { memset(this, 0, sizeof(StackEntry)); }
+		StackEntry(int i) { this->i = i; }
+		StackEntry(float f) { this->f = f; }
+		StackEntry(void* ptr) { this->ptr = ptr; }
+	};
+
+	typedef StackEntry Argument;
+	typedef StackEntry* Stack;
 
 	enum TokenTypes
 	{
@@ -87,7 +113,7 @@ namespace cflat
 
 	enum exceptions
 	{
-		SYNTAX_ERROR = 0,
+		SYNTAX_ERROR,
 		CLOSEBRACKET_EXPECTED,
 		OPENBRACKET_EXPECTED,
 		COMMA_EXPECTED,
@@ -97,7 +123,9 @@ namespace cflat
 		SYMBOL_REDEFINITION,
 		INVALID_CHARACTER,
 		DECLARATION_EXPECTED,
-		TYPE_EXPECTED
+		TYPE_EXPECTED,
+		NO_ENTRY_POINT,
+		NOT_IMPLEMENTED,
 	};
 
 	static const char* exceptions_s[] =
@@ -113,6 +141,8 @@ namespace cflat
 		"Invalid character found",
 		"Declaration expected",
 		"Type expected",
+		"Function 'main' was not found",
+		"Requested feature is not yet implemented",
 	};
 
 	enum DataType
@@ -150,6 +180,7 @@ namespace cflat
 		MW,
 		MH,
 		MB,
+		MG,
 		LDI,
 		LDF,
 		// int arithmetic
@@ -190,6 +221,7 @@ namespace cflat
 		CTF,
 		CTI,
 		// end
+		INIT,
 		Q,
 	};
 
@@ -203,6 +235,7 @@ namespace cflat
 		"MW",
 		"MH",
 		"MB",
+		"MG",
 		"LDI",
 		"LDF",
 		// int arithmetic
@@ -242,7 +275,8 @@ namespace cflat
 		// conversion
 		"CTF",
 		"CTI",
-		// end
+		// start end
+		"INIT",
 		"Q",
 	};
 
@@ -250,7 +284,7 @@ namespace cflat
 	{
 		0, // NOP
 		1, 1, // stack
-		2, 2, 2, 2, 2, // data
+		3, 3, 3, 2, 3, 3, // data
 		3, 3, 3, 3, 3, // int arithmetic
 		3, 3, 3, 3, // float arithmetic
 		2, 3, 3, 3, // bit
@@ -258,6 +292,6 @@ namespace cflat
 		3, 3, 3, 3, 3, 3, // relational
 		1, 2, 2, 0, 1, 1, // jump
 		2, 2, // conversion
-		0
+		0, 0
 	};
 }

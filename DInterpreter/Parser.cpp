@@ -15,7 +15,7 @@
 namespace cflat
 {
 
-	Parser::Parser(Lexer* lexer) : lexer(lexer), localStackSize(0), maxLocalStackSize(0), placeholderStack(PLACEHOLDER_STACK_START)
+	Parser::Parser(Lexer* lexer) : lexer(lexer), globalStackSize(0), localStackSize(0), maxLocalStackSize(0), placeholderStack(PLACEHOLDER_STACK_START), error(false)
 	{
 		if (!lexer->isPrelexed())
 			lexer->prelex();
@@ -39,6 +39,39 @@ namespace cflat
 			return e;
 		}
 		return NULL;
+	}
+
+	void Parser::parse()
+	{
+		instructions.push_back(Instruction(Opcodes::INIT, 0, 0, 0));
+		// push sp, pc, ra space
+		PUSH_GLOBAL();
+		PUSH_GLOBAL();
+		PUSH_GLOBAL();
+		instructions.push_back(Instruction(Opcodes::PUSH, 0, 0, 0));
+		instructions.push_back(Instruction(Opcodes::CL, 0, 0, 0));
+		instructions.push_back(Instruction(Opcodes::Q, 0, 0, 0));
+		while (!lexer->isEndOfTokenList())
+		{
+			Exception* exc = parsenext();
+			if (exc)
+			{
+				sprintf(errorString, "Line: %d, Expression: %d @ %s\nError: %s", 
+					exc->gettoken()->getline(), 
+					exc->getexprnum(),
+					exc->gettoken()->tostring(), 
+					exc->tostring());
+				error = true;
+				break;
+			}
+		}
+		// set entry point
+		Function* f = getFunction("main");
+		if (!f)
+			throw exceptions::NO_ENTRY_POINT;
+
+		instructions[1].set(Opcodes::PUSH, Argument(globalStackSize), 0, 0);
+		instructions[2].set(Opcodes::CL, Argument(f->getAddress()), 0, 0);
 	}
 
 	void Parser::stmts()
@@ -67,7 +100,7 @@ namespace cflat
 			instructions.push_back(Instruction(Opcodes::JF, 0, 0, 0));
 			stmts();
 			instructions.push_back(Instruction(Opcodes::J, start, 0, 0));
-			instructions[jid].set(Opcodes::JF, Instruction::Arg(stackSlot), Instruction::Arg((int)instructions.size()), 0);
+			instructions[jid].set(Opcodes::JF, Argument(stackSlot), Argument((int)instructions.size()), 0);
 			POP();
 		}
 		else if (t0->gettype() == Keywords::IF)
@@ -83,13 +116,13 @@ namespace cflat
 			{
 				int eid = instructions.size();
 				instructions.push_back(Instruction(Opcodes::J, 0, 0, 0));
-				instructions[jid].set(Opcodes::JF, Instruction::Arg(stackSlot), Instruction::Arg((int)instructions.size()), 0);
+				instructions[jid].set(Opcodes::JF, Argument(stackSlot), Argument((int)instructions.size()), 0);
 				lexer->next();
 				stmts();
-				instructions[eid].set(Opcodes::J, Instruction::Arg((int)instructions.size()), 0, 0);
+				instructions[eid].set(Opcodes::J, Argument((int)instructions.size()), 0, 0);
 			}
 			else
-				instructions[jid].set(Opcodes::JF, Instruction::Arg(stackSlot), Instruction::Arg((int)instructions.size()), 0);
+				instructions[jid].set(Opcodes::JF, Argument(stackSlot), Argument((int)instructions.size()), 0);
 			POP();
 		}
 		else if (t0->gettype() == TokenTypes::ID)
@@ -102,9 +135,22 @@ namespace cflat
 				Variable* v = getVariable(ident);
 				if (v == NULL)
 					throw exceptions::UNDEFINED_SYMBOL;
+
 				lexer->next();
-				DataType t = boolexpr(v->getstackslot());
-				forcedTypecast(v->gettype(), t, v->getstackslot());
+				if (v->isglobal())
+				{
+					int stackSlot;
+					PUSH(stackSlot);
+					DataType t = boolexpr(stackSlot);
+					forcedTypecast(v->gettype(), t, stackSlot);
+					instructions.push_back(Instruction(Opcodes::MG, Argument(v->getstackslot()), Argument(stackSlot), 0));
+					POP();
+				}
+				else
+				{
+					DataType t = boolexpr(v->getstackslot());
+					forcedTypecast(v->gettype(), t, v->getstackslot());
+				}
 			}
 			else if (t1->gettype() == '(')
 			{
@@ -121,7 +167,7 @@ namespace cflat
 		{
 			lexer->next();
 			boolexpr(PLACEHOLDER_STACK_START);
-			instructions.push_back(Instruction(Opcodes::J, Instruction::Arg(FUNCTION_END_LABEL), 0, 0));
+			instructions.push_back(Instruction(Opcodes::J, Argument(FUNCTION_END_LABEL), 0, 0));
 
 			if (lexer->look()->gettype() != ';')
 				throw exceptions::SEMICOLON_EXPECTED;
@@ -144,9 +190,9 @@ namespace cflat
 			POP();
 
 			instructions.push_back(Instruction(Opcodes::LOR,
-				Instruction::Arg(stackSlot),
-				Instruction::Arg(stackSlot),
-				Instruction::Arg(newSlot)));
+				Argument(stackSlot),
+				Argument(stackSlot),
+				Argument(newSlot)));
 
 			return DataType::S32;
 		}
@@ -165,9 +211,9 @@ namespace cflat
 			POP();
 
 			instructions.push_back(Instruction(Opcodes::LAND,
-				Instruction::Arg(stackSlot),
-				Instruction::Arg(stackSlot),
-				Instruction::Arg(newSlot)));
+				Argument(stackSlot),
+				Argument(stackSlot),
+				Argument(newSlot)));
 
 			return DataType::S32;
 		}
@@ -188,17 +234,17 @@ namespace cflat
 			if (generalizedTypecast(t, s, stackSlot, newSlot) == DataType::F32)
 			{
 				instructions.push_back(Instruction(Opcodes::EQF,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(newSlot)));
+					Argument(stackSlot),
+					Argument(stackSlot),
+					Argument(newSlot)));
 				return DataType::S32;
 			}
 			else
 			{
 				instructions.push_back(Instruction(Opcodes::EQ,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(newSlot)));
+					Argument(stackSlot),
+					Argument(stackSlot),
+					Argument(newSlot)));
 				return DataType::S32;
 			}
 		}
@@ -213,25 +259,25 @@ namespace cflat
 			if (generalizedTypecast(t, s, stackSlot, newSlot) == DataType::F32)
 			{
 				instructions.push_back(Instruction(Opcodes::EQF,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(newSlot)));
+					Argument(stackSlot),
+					Argument(stackSlot),
+					Argument(newSlot)));
 
 				instructions.push_back(Instruction(Opcodes::LNOT,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(stackSlot), 0));
+					Argument(stackSlot),
+					Argument(stackSlot), 0));
 				return DataType::S32;
 			}
 			else
 			{
 				instructions.push_back(Instruction(Opcodes::EQ,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(newSlot)));
+					Argument(stackSlot),
+					Argument(stackSlot),
+					Argument(newSlot)));
 
 				instructions.push_back(Instruction(Opcodes::LNOT,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(stackSlot), 0));
+					Argument(stackSlot),
+					Argument(stackSlot), 0));
 				return DataType::S32;
 			}
 		}
@@ -252,17 +298,17 @@ namespace cflat
 			if (generalizedTypecast(t, s, stackSlot, newSlot) == DataType::F32)
 			{
 				instructions.push_back(Instruction(Opcodes::LTF,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(newSlot)));
+					Argument(stackSlot),
+					Argument(stackSlot),
+					Argument(newSlot)));
 				return DataType::S32;
 			}
 			else
 			{
 				instructions.push_back(Instruction(Opcodes::LT,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(newSlot)));
+					Argument(stackSlot),
+					Argument(stackSlot),
+					Argument(newSlot)));
 				return DataType::S32;
 			}
 		}
@@ -277,17 +323,17 @@ namespace cflat
 			if (generalizedTypecast(t, s, stackSlot, newSlot) == DataType::F32)
 			{
 				instructions.push_back(Instruction(Opcodes::LETF,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(newSlot)));
+					Argument(stackSlot),
+					Argument(stackSlot),
+					Argument(newSlot)));
 				return DataType::S32;
 			}
 			else
 			{
 				instructions.push_back(Instruction(Opcodes::LET,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(newSlot)));
+					Argument(stackSlot),
+					Argument(stackSlot),
+					Argument(newSlot)));
 				return DataType::S32;
 			}
 		}
@@ -302,17 +348,17 @@ namespace cflat
 			if (generalizedTypecast(t, s, stackSlot, newSlot) == DataType::F32)
 			{
 				instructions.push_back(Instruction(Opcodes::LTF,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(newSlot),
-					Instruction::Arg(stackSlot)));
+					Argument(stackSlot),
+					Argument(newSlot),
+					Argument(stackSlot)));
 				return DataType::S32;
 			}
 			else
 			{
 				instructions.push_back(Instruction(Opcodes::LT,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(newSlot),
-					Instruction::Arg(stackSlot)));
+					Argument(stackSlot),
+					Argument(newSlot),
+					Argument(stackSlot)));
 				return DataType::S32;
 			}
 
@@ -328,17 +374,17 @@ namespace cflat
 			if (generalizedTypecast(t, s, stackSlot, newSlot) == DataType::F32)
 			{
 				instructions.push_back(Instruction(Opcodes::LETF,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(newSlot),
-					Instruction::Arg(stackSlot)));
+					Argument(stackSlot),
+					Argument(newSlot),
+					Argument(stackSlot)));
 				return DataType::S32;
 			}
 			else
 			{
 				instructions.push_back(Instruction(Opcodes::LET,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(newSlot),
-					Instruction::Arg(stackSlot)));
+					Argument(stackSlot),
+					Argument(newSlot),
+					Argument(stackSlot)));
 				return DataType::S32;
 			}
 		}
@@ -361,17 +407,17 @@ namespace cflat
 				if (generalizedTypecast(t, s, stackSlot, newSlot) == DataType::F32)
 				{
 					instructions.push_back(Instruction(Opcodes::ADDF,
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(newSlot)));
+						Argument(stackSlot),
+						Argument(stackSlot),
+						Argument(newSlot)));
 					t = DataType::F32;
 				}
 				else
 				{
 					instructions.push_back(Instruction(Opcodes::ADD,
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(newSlot)));
+						Argument(stackSlot),
+						Argument(stackSlot),
+						Argument(newSlot)));
 					t = DataType::S32;
 				}
 
@@ -387,17 +433,17 @@ namespace cflat
 				if (generalizedTypecast(t, s, stackSlot, newSlot) == DataType::F32)
 				{
 					instructions.push_back(Instruction(Opcodes::SUBF,
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(newSlot)));
+						Argument(stackSlot),
+						Argument(stackSlot),
+						Argument(newSlot)));
 					t = DataType::F32;
 				}
 				else
 				{
 					instructions.push_back(Instruction(Opcodes::SUB,
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(newSlot)));
+						Argument(stackSlot),
+						Argument(stackSlot),
+						Argument(newSlot)));
 					t = DataType::S32;
 				}
 
@@ -422,17 +468,17 @@ namespace cflat
 				if (generalizedTypecast(t, s, stackSlot, newSlot) == DataType::F32)
 				{
 					instructions.push_back(Instruction(Opcodes::MULTF,
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(newSlot)));
+						Argument(stackSlot),
+						Argument(stackSlot),
+						Argument(newSlot)));
 					t = DataType::F32;
 				}
 				else
 				{
 					instructions.push_back(Instruction(Opcodes::MULT,
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(newSlot)));
+						Argument(stackSlot),
+						Argument(stackSlot),
+						Argument(newSlot)));
 					t = DataType::S32;
 				}
 
@@ -448,17 +494,17 @@ namespace cflat
 				if (generalizedTypecast(t, s, stackSlot, newSlot) == DataType::F32)
 				{
 					instructions.push_back(Instruction(Opcodes::DIVF,
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(newSlot)));
+						Argument(stackSlot),
+						Argument(stackSlot),
+						Argument(newSlot)));
 					t = DataType::F32;
 				}
 				else
 				{
 					instructions.push_back(Instruction(Opcodes::DIV,
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(stackSlot),
-						Instruction::Arg(newSlot)));
+						Argument(stackSlot),
+						Argument(stackSlot),
+						Argument(newSlot)));
 					t = DataType::S32;
 				}
 			}
@@ -475,25 +521,25 @@ namespace cflat
 			t = mathunary(stackSlot);
 
 			instructions.push_back(Instruction(Opcodes::LDI,
-				Instruction::Arg(stackSlot + STACK_ENTRY_SIZE), 0, 0));
+				Argument(stackSlot + STACK_ENTRY_SIZE), 0, 0));
 
 			if (t == DataType::F32)
 				instructions.push_back(Instruction(Opcodes::SUBF,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(stackSlot + STACK_ENTRY_SIZE),
-					Instruction::Arg(stackSlot)));
+					Argument(stackSlot),
+					Argument(stackSlot + STACK_ENTRY_SIZE),
+					Argument(stackSlot)));
 			else
 				instructions.push_back(Instruction(Opcodes::SUB,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(stackSlot + STACK_ENTRY_SIZE),
-					Instruction::Arg(stackSlot)));
+					Argument(stackSlot),
+					Argument(stackSlot + STACK_ENTRY_SIZE),
+					Argument(stackSlot)));
 		}
 		else if (lexer->look()->gettype() == Keywords::NOT)
 		{
 			lexer->next();
 			t = mathunary(stackSlot);
 			instructions.push_back(Instruction(Opcodes::LNOT,
-				Instruction::Arg(stackSlot), 0, 0));
+				Argument(stackSlot), 0, 0));
 		}
 		else
 			t = factor(stackSlot);
@@ -519,32 +565,32 @@ namespace cflat
 		case TokenTypes::INT_LITERAL:
 		{
 			instructions.push_back(Instruction(Opcodes::LDI,
-				Instruction::Arg(stackSlot),
-				Instruction::Arg(dynamic_cast<Integer*>(lexer->look())->getvalue()), 0));
+				Argument(stackSlot),
+				Argument(dynamic_cast<Integer*>(lexer->look())->getvalue()), 0));
 			lexer->next();
 			return DataType::S32;
 		}
 		case TokenTypes::FLOAT_LITERAL:
 		{
 			instructions.push_back(Instruction(Opcodes::LDF,
-				Instruction::Arg(stackSlot),
-				Instruction::Arg(dynamic_cast<Float*>(lexer->look())->getvalue()), 0));
+				Argument(stackSlot),
+				Argument(dynamic_cast<Float*>(lexer->look())->getvalue()), 0));
 			lexer->next();
 			return DataType::F32;
 		}
 		case Keywords::TRUE:
 		{
 			instructions.push_back(Instruction(Opcodes::LDI,
-				Instruction::Arg(stackSlot),
-				Instruction::Arg(~0), 0));
+				Argument(stackSlot),
+				Argument(~0), 0));
 			lexer->next();
 			return DataType::S32;
 		}
 		case Keywords::FALSE:
 		{
 			instructions.push_back(Instruction(Opcodes::LDI,
-				Instruction::Arg(stackSlot),
-				Instruction::Arg(0), 0));
+				Argument(stackSlot),
+				Argument(0), 0));
 
 			lexer->next();
 			return DataType::S32;
@@ -557,8 +603,8 @@ namespace cflat
 			{
 				int retSlot = functionCall(ident);
 				instructions.push_back(Instruction(Opcodes::MW,
-					Instruction::Arg(stackSlot),
-					Instruction::Arg(retSlot), 0));
+					Argument(stackSlot),
+					Argument(retSlot), 0));
 				return DataType::S32; // FIXME: make functions typed
 			}
 			else
@@ -568,16 +614,19 @@ namespace cflat
 				{
 					if (typesizes[v->gettype()] == 1)
 						instructions.push_back(Instruction(Opcodes::MB,
-							Instruction::Arg(stackSlot),
-							Instruction::Arg(v->getstackslot()), 0));
+							Argument(stackSlot),
+							Argument(v->getstackslot()),
+							Argument(v->isglobal())));
 					else if (typesizes[v->gettype()] == 2)
 						instructions.push_back(Instruction(Opcodes::MH,
-							Instruction::Arg(stackSlot),
-							Instruction::Arg(v->getstackslot()), 0));
+							Argument(stackSlot),
+							Argument(v->getstackslot()), 
+							Argument(v->isglobal())));
 					else if (typesizes[v->gettype()] == 4)
 						instructions.push_back(Instruction(Opcodes::MW,
-							Instruction::Arg(stackSlot),
-							Instruction::Arg(v->getstackslot()), 0));
+							Argument(stackSlot),
+							Argument(v->getstackslot()), 
+							Argument(v->isglobal())));
 				}
 				else
 					throw exceptions::UNDEFINED_SYMBOL;
@@ -595,7 +644,7 @@ namespace cflat
 			throw exceptions::UNDEFINED_SYMBOL;
 
 		// push return value space /// FIXME: for now only 1 return value
-		instructions.push_back(Instruction(Opcodes::PUSH, Instruction::Arg(STACK_ENTRY_SIZE), 0, 0));
+		instructions.push_back(Instruction(Opcodes::PUSH, Argument(STACK_ENTRY_SIZE), 0, 0));
 
 		// push argument space
 		int nargs = 0;
@@ -614,18 +663,19 @@ namespace cflat
 			boolexpr(-nargs * STACK_ENTRY_SIZE);
 		}
 		
-		instructions.push_back(Instruction(Opcodes::LDI, Instruction::Arg(-(nargs + 1) * STACK_ENTRY_SIZE), Instruction::Arg(nargs), 0));
+		instructions.push_back(Instruction(Opcodes::LDI, Argument(-(nargs + 1) * STACK_ENTRY_SIZE), Argument(nargs), 0));
 
-		instructions.push_back(Instruction(Opcodes::PUSH, Instruction::Arg((nargs + 1) * STACK_ENTRY_SIZE), 0, 0));
+		// push n-arguments + nargs + ra space
+		instructions.push_back(Instruction(Opcodes::PUSH, Argument((nargs + 2) * STACK_ENTRY_SIZE), 0, 0));
 
 		if (f->isExternal())
-			instructions.push_back(Instruction(Opcodes::CLE, Instruction::Arg(f->getAddress()), 0, 0));
+			instructions.push_back(Instruction(Opcodes::CLE, Argument(f->getAddress()), 0, 0));
 		else
-			instructions.push_back(Instruction(Opcodes::CL, Instruction::Arg(f->getAddress()), 0, 0));
+			instructions.push_back(Instruction(Opcodes::CL, Argument(f->getAddress()), 0, 0));
 
-		instructions.push_back(Instruction(Opcodes::POP, Instruction::Arg((nargs + 1) * STACK_ENTRY_SIZE), 0, 0));
+		instructions.push_back(Instruction(Opcodes::POP, Argument((nargs + 2) * STACK_ENTRY_SIZE), 0, 0));
 
-		instructions.push_back(Instruction(Opcodes::POP, Instruction::Arg(STACK_ENTRY_SIZE), 0, 0));
+		instructions.push_back(Instruction(Opcodes::POP, Argument(STACK_ENTRY_SIZE), 0, 0));
 
 		lexer->next();
 
@@ -637,15 +687,15 @@ namespace cflat
 		if (t == DataType::F32 && s != DataType::F32)
 		{
 			instructions.push_back(Instruction(Opcodes::CTF,
-				Instruction::Arg(sSlot),
-				Instruction::Arg(sSlot), 0));
+				Argument(sSlot),
+				Argument(sSlot), 0));
 			return DataType::F32;
 		}
 		else if (t != DataType::F32 && s == DataType::F32)
 		{
 			instructions.push_back(Instruction(Opcodes::CTF,
-				Instruction::Arg(tSlot),
-				Instruction::Arg(tSlot), 0));
+				Argument(tSlot),
+				Argument(tSlot), 0));
 			return DataType::F32;
 		}
 		return t;
@@ -659,14 +709,14 @@ namespace cflat
 		if (t == DataType::F32 && s != DataType::F32)
 		{
 			instructions.push_back(Instruction(Opcodes::CTF,
-				Instruction::Arg(tSlot),
-				Instruction::Arg(tSlot), 0));
+				Argument(tSlot),
+				Argument(tSlot), 0));
 		}
 		else if (t != DataType::F32 && s == DataType::F32)
 		{
 			instructions.push_back(Instruction(Opcodes::CTI,
-				Instruction::Arg(tSlot),
-				Instruction::Arg(tSlot), 0));
+				Argument(tSlot),
+				Argument(tSlot), 0));
 		}
 		else if (t == DataType::S8 || t == DataType::U8)
 		{
@@ -675,12 +725,12 @@ namespace cflat
 			POP();
 
 			instructions.push_back(Instruction(Opcodes::LDI,
-				Instruction::Arg(immValSlot),
-				Instruction::Arg(0xFF), 0));
+				Argument(immValSlot),
+				Argument(0xFF), 0));
 			instructions.push_back(Instruction(Opcodes::BAND,
-				Instruction::Arg(tSlot),
-				Instruction::Arg(tSlot),
-				Instruction::Arg(immValSlot)));
+				Argument(tSlot),
+				Argument(tSlot),
+				Argument(immValSlot)));
 		}
 		else if (t == DataType::S16 || t == DataType::U16)
 		{
@@ -689,12 +739,12 @@ namespace cflat
 			POP();
 
 			instructions.push_back(Instruction(Opcodes::LDI,
-				Instruction::Arg(immValSlot),
-				Instruction::Arg(0xFFFF), 0));
+				Argument(immValSlot),
+				Argument(0xFFFF), 0));
 			instructions.push_back(Instruction(Opcodes::BAND,
-				Instruction::Arg(tSlot),
-				Instruction::Arg(tSlot),
-				Instruction::Arg(immValSlot)));
+				Argument(tSlot),
+				Argument(tSlot),
+				Argument(immValSlot)));
 		}
 	}
 
@@ -804,9 +854,9 @@ namespace cflat
 				stmts();
 
 				// update stack size
-				instructions[functionStart].set(Opcodes::PUSH, Instruction::Arg(maxLocalStackSize), 0, 0);
+				instructions[functionStart].set(Opcodes::PUSH, Argument(maxLocalStackSize), 0, 0);
 				int functionEnd = instructions.size();
-				instructions.push_back(Instruction(Opcodes::POP, Instruction::Arg(maxLocalStackSize), 0, 0));
+				instructions.push_back(Instruction(Opcodes::POP, Argument(maxLocalStackSize), 0, 0));
 				instructions.push_back(Instruction(Opcodes::JR, 0, 0, 0));
 
 				// replace argument addresses
