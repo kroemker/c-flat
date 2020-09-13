@@ -5,6 +5,7 @@
 
 namespace cflat
 {
+
 	class Instruction
 	{
 	public:

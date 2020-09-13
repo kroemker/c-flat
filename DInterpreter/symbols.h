@@ -6,12 +6,13 @@
 #define STACK_ENTRY_SIZE	(STACK_ENTRY_WIDTH / 8)
 
 #define STACK_SIZE			0x400
-#define STACK_NUM_VALUES	(STACK_SIZE / STACK_ENTRY_SIZE)
+#define STACK_NUM_ENTRIES	(STACK_SIZE / STACK_ENTRY_SIZE)
 
-#define SP				stack[STACK_NUM_VALUES - 1].i
-#define PC				stack[STACK_NUM_VALUES - 2].i
-#define STACK(n)		stack[SP + ((n) / STACK_ENTRY_SIZE)]
-#define GLOBAL(n)		stack[STACK_NUM_VALUES - ((n) / STACK_ENTRY_SIZE) - 1]
+#define SP					stack[STACK_NUM_ENTRIES - 1].i
+#define PC					stack[STACK_NUM_ENTRIES - 2].i
+#define STACK(n)			stack[(SP + (n)) / STACK_ENTRY_SIZE]
+#define GLOBAL(n)			stack[STACK_NUM_ENTRIES - ((n) / STACK_ENTRY_SIZE) - 1]
+#define STACK_INBOUNDS(n)	(((SP + (n)) / STACK_ENTRY_SIZE) < STACK_NUM_ENTRIES)
 
 #define ID_SIZE_LIMIT		64
 #define TOKENTYPES			8
@@ -22,22 +23,20 @@
 
 namespace cflat
 {
-
-
 	union StackEntry
 	{
 		int i;
 		float f;
-		void* ptr;
 
 		StackEntry() { memset(this, 0, sizeof(StackEntry)); }
 		StackEntry(int i) { this->i = i; }
 		StackEntry(float f) { this->f = f; }
-		StackEntry(void* ptr) { this->ptr = ptr; }
 	};
 
 	typedef StackEntry Argument;
 	typedef StackEntry* Stack;
+
+	typedef void (*ExternalFunctionPtr)(Stack);
 
 	enum TokenTypes
 	{

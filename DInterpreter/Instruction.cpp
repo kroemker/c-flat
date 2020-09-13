@@ -1,6 +1,7 @@
 #include "Instruction.h"
 
 #include <iostream>
+#include <cassert>
 
 cflat::Instruction::Instruction(int opcode, Argument a0, Argument a1, Argument a2) : opcode(opcode), a0(a0), a1(a1), a2(a2)
 {
@@ -66,65 +67,86 @@ void cflat::Instruction::execute(Stack* stackPtr)
 	switch (opcode)
 	{
 	case Opcodes::ADD:
+		assert(STACK_INBOUNDS(a0.i));
 		STACK(a0.i).i = STACK(a1.i).i + STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::ADDF:
+		assert(STACK_INBOUNDS(a0.i));
 		STACK(a0.i).f = STACK(a1.i).f + STACK(a2.i).f;
 		PC++;
 		break;
 	case Opcodes::BAND:
+		assert(STACK_INBOUNDS(a0.i));
 		STACK(a0.i).i = STACK(a1.i).i & STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::BNOT:
+		assert(STACK_INBOUNDS(a0.i));
 		STACK(a0.i).i = ~STACK(a1.i).i;
 		PC++;
 		break;
 	case Opcodes::BOR:
+		assert(STACK_INBOUNDS(a0.i));
 		STACK(a0.i).i = STACK(a1.i).i | STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::BXOR:
+		assert(STACK_INBOUNDS(a0.i));
 		STACK(a0.i).i = STACK(a1.i).i ^ STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::CL:
+		assert(STACK_INBOUNDS(0));
 		STACK(0).i = PC + 1;
 		PC = a0.i;
 		break;
 	case Opcodes::CLE:
-		throw exceptions::NOT_IMPLEMENTED;
+		ExternalFunctionPtr f;
+		if (sizeof(ExternalFunctionPtr) == 4)
+			f = (ExternalFunctionPtr)(a0.i);
+		else if (sizeof(ExternalFunctionPtr) == 8)
+			f = (ExternalFunctionPtr)((a0.i << 32) | a1.i);
+		else
+			throw exceptions::NOT_IMPLEMENTED;
+		f(stack);
 		PC++;
 		break;
 	case Opcodes::CTF:
+		assert(STACK_INBOUNDS(a0.i));
 		STACK(a0.i).f = (float)STACK(a1.i).i;
 		PC++;
 		break;
 	case Opcodes::CTI:
+		assert(STACK_INBOUNDS(a0.i));
 		STACK(a0.i).i = (int)STACK(a1.i).f;
 		PC++;
 		break;
 	case Opcodes::DIV:
+		assert(STACK_INBOUNDS(a0.i));
 		STACK(a0.i).i = STACK(a1.i).i / STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::DIVF:
+		assert(STACK_INBOUNDS(a0.i));
 		STACK(a0.i).f = STACK(a1.i).f / STACK(a2.i).f;
 		PC++;
 		break;
 	case Opcodes::EQ:
+		assert(STACK_INBOUNDS(a0.i));
 		STACK(a0.i).i = STACK(a1.i).i == STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::EQF:
+		assert(STACK_INBOUNDS(a0.i));
 		STACK(a0.i).i = STACK(a1.i).f == STACK(a2.i).f;
 		PC++;
 		break;
 	case Opcodes::INIT:
-		*stackPtr = (Stack)malloc(STACK_SIZE);
-		memset(*stackPtr, 0, STACK_SIZE);
+		*stackPtr = new StackEntry[STACK_NUM_ENTRIES];
 		stack = *stackPtr;
+		SP = STACK_SIZE;
+		PC = 0;
 		PC++;
 		break;
 	case Opcodes::J:
@@ -135,6 +157,7 @@ void cflat::Instruction::execute(Stack* stackPtr)
 			PC = a1.i;
 		break;
 	case Opcodes::JR:
+		assert(STACK_INBOUNDS(0));
 		PC = STACK(0).i;
 		break;
 	case Opcodes::JT:
@@ -217,7 +240,7 @@ void cflat::Instruction::execute(Stack* stackPtr)
 		PC++;
 		break;
 	case Opcodes::Q:
-		free(*stackPtr);
+		delete[] (*stackPtr);
 		*stackPtr = NULL;
 		break;
 	case Opcodes::SUB:

@@ -25,6 +25,11 @@ namespace cflat
 	{
 	}
 
+	void Parser::registerExternalFunction(char * name, ExternalFunctionPtr f)
+	{
+		functions.push_back(Function(name, f));
+	}
+
 	Exception* Parser::parsenext()
 	{
 		try
@@ -44,12 +49,12 @@ namespace cflat
 	void Parser::parse()
 	{
 		instructions.push_back(Instruction(Opcodes::INIT, 0, 0, 0));
-		// push sp, pc, ra space
-		PUSH_GLOBAL();
+		// push sp, pc space
 		PUSH_GLOBAL();
 		PUSH_GLOBAL();
 		instructions.push_back(Instruction(Opcodes::PUSH, 0, 0, 0));
 		instructions.push_back(Instruction(Opcodes::CL, 0, 0, 0));
+		instructions.push_back(Instruction(Opcodes::POP, Argument(4), 0, 0));
 		instructions.push_back(Instruction(Opcodes::Q, 0, 0, 0));
 		while (!lexer->isEndOfTokenList())
 		{
@@ -70,7 +75,8 @@ namespace cflat
 		if (!f)
 			throw exceptions::NO_ENTRY_POINT;
 
-		instructions[1].set(Opcodes::PUSH, Argument(globalStackSize), 0, 0);
+		// push global space + 1 additional space for ra of the following call
+		instructions[1].set(Opcodes::PUSH, Argument(globalStackSize + STACK_ENTRY_SIZE), 0, 0);
 		instructions[2].set(Opcodes::CL, Argument(f->getAddress()), 0, 0);
 	}
 
@@ -669,7 +675,16 @@ namespace cflat
 		instructions.push_back(Instruction(Opcodes::PUSH, Argument((nargs + 2) * STACK_ENTRY_SIZE), 0, 0));
 
 		if (f->isExternal())
-			instructions.push_back(Instruction(Opcodes::CLE, Argument(f->getAddress()), 0, 0));
+		{
+			if (sizeof(ExternalFunctionPtr) == 4)
+				instructions.push_back(Instruction(Opcodes::CLE, Argument((int)f->getExternalFunctionPtr()), 0, 0));
+			else if (sizeof(ExternalFunctionPtr) == 8)
+				instructions.push_back(Instruction(Opcodes::CLE, 
+					Argument((int)((int64_t)f->getExternalFunctionPtr() >> 32)), 
+					Argument((int)f->getExternalFunctionPtr()), 0));
+			else
+				throw NOT_IMPLEMENTED;
+		}
 		else
 			instructions.push_back(Instruction(Opcodes::CL, Argument(f->getAddress()), 0, 0));
 
@@ -847,7 +862,7 @@ namespace cflat
 				variables.push_back(Variable(DataType::U32, "__ra",
 					placeholderStack, false));
 
-				functions.push_back(Function(ident, functionStart, false));
+				functions.push_back(Function(ident, functionStart));
 				instructions.push_back(Instruction(Opcodes::PUSH, 0, 0, 0));
 
 				// do function

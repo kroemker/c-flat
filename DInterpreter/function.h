@@ -2,17 +2,24 @@
 
 #include "symbols.h"
 
-class Function
+namespace cflat
 {
-public:
-	Function(char* name, int address, bool external) : name(name), address(address), external(external) {};
-	~Function() {};
-	char*		getName() { return name; }
-	int			getAddress() { return address; }
-	bool		isExternal() { return external; }
-private:
-	char*		name;
-	// arguments?
-	int			address;
-	bool		external;
-};
+
+	class Function
+	{
+	public:
+		Function(char* name, int address) : name(name), address(address), external(false) {};
+		Function(char* name, ExternalFunctionPtr functionPtr) : name(name), functionPtr(functionPtr), external(true) {};
+		~Function() {};
+		char*				getName() { return name; }
+		int					getAddress() { return address; }
+		ExternalFunctionPtr	getExternalFunctionPtr() { return functionPtr; }
+		bool				isExternal() { return external; }
+	private:
+		char*					name;
+		int						address;
+		ExternalFunctionPtr		functionPtr;
+		bool					external;
+	};
+
+}

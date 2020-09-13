@@ -119,11 +119,11 @@ namespace cflat
 		}
 		if (isalpha(cCurrent) || cCurrent == '_')
 		{
-			Identifier* id = new Identifier(tolower(cCurrent));
+			Identifier* id = new Identifier(cCurrent);
 			inputIndex++;
 			while (!isready())
 				if (isalnum(input[inputIndex]) || input[inputIndex] == '_')
-					id->append(tolower(input[inputIndex++]));
+					id->append(input[inputIndex++]);
 				else
 					break;
 			id->checkkeyword();

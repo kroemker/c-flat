@@ -12,14 +12,17 @@
 
 namespace cflat
 {
-
 	class Parser
 	{
 	public:
 		Parser(Lexer* lexer);
 		~Parser(void);
+
+		void registerExternalFunction(char* name, ExternalFunctionPtr f);
+
 		void parse();
 		Exception*	parsenext();
+
 		char* getErrorString() { return errorString; }
 		bool isError() { return error; }
 
