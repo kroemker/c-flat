@@ -50,17 +50,7 @@ namespace cflat
 		ID,
 	};
 
-	static const char* ttypes_s[] =
-	{
-		"TYPE_REAL",
-		"TYPE_INT",
-		"TYPE_STRING",
-		"TYPE_GREATER_EQUALS",
-		"TYPE_LESS_EQUALS",
-		"TYPE_UNEQUALS",
-		"TYPE_EQUALS",
-		"TYPE_ID"
-	};
+	extern const char* ttypes_s[];
 
 	enum Keywords
 	{
@@ -86,29 +76,7 @@ namespace cflat
 		FUNCTION,
 	};
 
-	static const char* keywords_s[] =
-	{
-		"var",
-		"begin",
-		"end",
-		"if",
-		"else",
-		"while",
-		"do",
-		"and",
-		"or",
-		"not",
-		"true",
-		"false",
-		"return",
-		// DataType
-		"u8", "u16", "u32",
-		"s8", "s16", "s32",
-		"f32",
-		"int",
-		"float",
-		"function",
-	};
+	extern const char* keywords_s[];
 
 	enum exceptions
 	{
@@ -127,22 +95,7 @@ namespace cflat
 		NOT_IMPLEMENTED,
 	};
 
-	static const char* exceptions_s[] =
-	{
-		"Syntax Error",
-		"')' expected",
-		"'(' expected",
-		"',' expected",
-		"Undefined Symbol",
-		"';' expected",
-		"Identifier expected",
-		"Redefinition of symbol",
-		"Invalid character found",
-		"Declaration expected",
-		"Type expected",
-		"Function 'main' was not found",
-		"Requested feature is not yet implemented",
-	};
+	extern const char* exceptions_s[];
 
 	enum DataType
 	{
@@ -157,17 +110,7 @@ namespace cflat
 		FUNC
 	};
 
-	static int typesizes[] =
-	{
-		0,
-		1,
-		2,
-		4,
-		1,
-		2,
-		4,
-		4
-	};
+	extern int typesizes[];
 
 	enum Opcodes
 	{
@@ -224,73 +167,6 @@ namespace cflat
 		Q,
 	};
 
-	static char* opcodes_s[] =
-	{
-		"NOP",
-		// stack
-		"PUSH",
-		"POP",
-		// data
-		"MW",
-		"MH",
-		"MB",
-		"MG",
-		"LDI",
-		"LDF",
-		// int arithmetic
-		"ADD",
-		"SUB",
-		"MULT",
-		"DIV",
-		"MOD",
-		// float arithmetic
-		"ADDF",
-		"SUBF",
-		"MULTF",
-		"DIVF",
-		// bit
-		"BNOT",
-		"BOR",
-		"BAND",
-		"BXOR",
-		// logical
-		"LNOT",
-		"LAND",
-		"LOR",
-		// relational
-		"EQ",
-		"EQF",
-		"LT",
-		"LET",
-		"LTF",
-		"LETF",
-		// jump
-		"J",
-		"JT",
-		"JF",
-		"JR",
-		"CL",
-		"CLE",
-		// conversion
-		"CTF",
-		"CTI",
-		// start end
-		"INIT",
-		"Q",
-	};
-
-	static int opcodes_nargs[] =
-	{
-		0, // NOP
-		1, 1, // stack
-		3, 3, 3, 2, 3, 3, // data
-		3, 3, 3, 3, 3, // int arithmetic
-		3, 3, 3, 3, // float arithmetic
-		2, 3, 3, 3, // bit
-		3, 3, 3, // logical
-		3, 3, 3, 3, 3, 3, // relational
-		1, 2, 2, 0, 1, 1, // jump
-		2, 2, // conversion
-		0, 0
-	};
+	extern char* opcodes_s[];
+	extern int opcodes_nargs[];
 }

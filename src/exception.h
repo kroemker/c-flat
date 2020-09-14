@@ -9,7 +9,7 @@ namespace cflat
 	class Exception
 	{
 	public:
-		Exception(int type, int exprn, Token* token) : type(type), exprnum(exprn), token(token) {}
+		Exception(int type, int exprn, Token* token);
 		virtual		~Exception(void) {};
 		int			gettype() { return type; }
 		Token*		gettoken() { return token; }

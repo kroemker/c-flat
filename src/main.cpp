@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
 	if (argc > 1)
 	{
 		int fileSize = 0;
-		FILE*   f;
+		FILE* f;
 		f = fopen(argv[1], "rb");
 		if (f)
 		{

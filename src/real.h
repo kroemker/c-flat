@@ -2,7 +2,8 @@
 
 #include "token.h"
 #include "symbols.h"
-#include <string>
+#include <cstring>
+#include <cstdio>
 
 namespace cflat
 {

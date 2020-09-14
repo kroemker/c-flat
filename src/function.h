@@ -8,8 +8,8 @@ namespace cflat
 	class Function
 	{
 	public:
-		Function(char* name, int address) : name(name), address(address), external(false) {};
-		Function(char* name, ExternalFunctionPtr functionPtr) : name(name), functionPtr(functionPtr), external(true) {};
+		Function(char* name, int address);
+		Function(char* name, ExternalFunctionPtr functionPtr);
 		~Function() {};
 		char*				getName() { return name; }
 		int					getAddress() { return address; }
