@@ -15,10 +15,10 @@ namespace cflat
 	class Lexer
 	{
 	public:
-		Lexer(char* str, int len);
+		Lexer();
 		virtual ~Lexer(void);
 		void	next() { if (isEndOfTokenList()) return; if (tokens[tokenIndex]->gettype() == ';')numExpr++; tokenIndex++; }
-		void	prelex();
+		void	prelex(char* str, int len);
 		void	jump(int pos) { tokenIndex = pos; }
 		int		getExpressionCount() { return numExpr; }
 		int		getTokenIndex() { return tokenIndex; }

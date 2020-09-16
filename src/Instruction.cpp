@@ -153,16 +153,20 @@ void cflat::Instruction::execute(Stack* stackPtr)
 		PC = a0.i;
 		break;
 	case Opcodes::JF:
-		if (!a0.i)
+		if (!STACK(a0.i).i)
 			PC = a1.i;
+		else
+			PC++;
 		break;
 	case Opcodes::JR:
 		assert(STACK_INBOUNDS(0));
 		PC = STACK(0).i;
 		break;
 	case Opcodes::JT:
-		if (a0.i)
+		if (STACK(a0.i).i)
 			PC = a1.i;
+		else
+			PC++;
 		break;
 	case Opcodes::LAND:
 		STACK(a0.i).i = STACK(a1.i).i && STACK(a2.i).i;

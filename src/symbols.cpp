@@ -52,7 +52,8 @@ namespace cflat
 		"Declaration expected",
 		"Type expected",
 		"Function 'main' was not found",
-		"Requested feature is not yet implemented",
+		"Invalid entry point set",
+		"Requested feature unavailable",
 	};
 
     int typesizes[] =

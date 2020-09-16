@@ -3,7 +3,7 @@
 namespace cflat
 {
 
-	Lexer::Lexer(char* str, int len) : input(str), inputLength(len), inputIndex(0), numExpr(0), tokenIndex(0), prelexed(false), line(1)
+	Lexer::Lexer() : input(NULL), inputLength(0), inputIndex(0), numExpr(0), tokenIndex(0), prelexed(false), line(1)
 	{
 	}
 
@@ -11,8 +11,10 @@ namespace cflat
 	{
 	}
 
-	void Lexer::prelex()
+	void Lexer::prelex(char* str, int len)
 	{
+		input = str;
+		inputLength = len;
 		Token* t;
 		while (!isready() && ((t = getnexttoken()) != NULL))
 		{

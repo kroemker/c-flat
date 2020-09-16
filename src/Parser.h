@@ -19,10 +19,10 @@ namespace cflat
 		~Parser(void);
 
 		void registerExternalFunction(char* name, ExternalFunctionPtr f);
+		int setEntryPoint(char* functionName);
 
 		void parse();
-		Exception*	parsenext();
-
+		Exception* parsenext();
 		char* getErrorString() { return errorString; }
 		bool isError() { return error; }
 
@@ -56,7 +56,7 @@ namespace cflat
 		int							localStackSize;
 		int							maxLocalStackSize;
 		int							placeholderStack;
-
+		Function*					entryPoint;
 	};
 
 }

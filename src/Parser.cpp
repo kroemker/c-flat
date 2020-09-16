@@ -15,10 +15,8 @@
 namespace cflat
 {
 
-	Parser::Parser(Lexer* lexer) : lexer(lexer), globalStackSize(0), localStackSize(0), maxLocalStackSize(0), placeholderStack(PLACEHOLDER_STACK_START), error(false)
+	Parser::Parser(Lexer* lexer) : lexer(lexer), globalStackSize(0), localStackSize(0), maxLocalStackSize(0), placeholderStack(PLACEHOLDER_STACK_START), error(false), entryPoint(NULL)
 	{
-		if (!lexer->isPrelexed())
-			lexer->prelex();
 	}
 
 	Parser::~Parser(void)
@@ -28,6 +26,20 @@ namespace cflat
 	void Parser::registerExternalFunction(char * name, ExternalFunctionPtr f)
 	{
 		functions.push_back(Function(name, f));
+	}
+
+	int Parser::setEntryPoint(char* functionName)
+	{
+		Function* f = getFunction(functionName);
+		if (!f || f->isExternal())
+			return 0;
+
+		entryPoint = f;
+
+		if (instructions.size() >= 2)
+			instructions[2].set(Opcodes::CL, Argument(entryPoint->getAddress()), 0, 0);
+
+		return 1;
 	}
 
 	Exception* Parser::parsenext()
@@ -56,6 +68,7 @@ namespace cflat
 		instructions.push_back(Instruction(Opcodes::CL, 0, 0, 0));
 		instructions.push_back(Instruction(Opcodes::POP, Argument(4), 0, 0));
 		instructions.push_back(Instruction(Opcodes::Q, 0, 0, 0));
+		
 		while (!lexer->isEndOfTokenList())
 		{
 			Exception* exc = parsenext();
@@ -70,14 +83,13 @@ namespace cflat
 				break;
 			}
 		}
-		// set entry point
-		Function* f = getFunction("main");
-		if (!f)
-			throw exceptions::NO_ENTRY_POINT;
-
+		
+		// handle entry point
+		if (!entryPoint)
+			setEntryPoint("main");
+			
 		// push global space + 1 additional space for ra of the following call
 		instructions[1].set(Opcodes::PUSH, Argument(globalStackSize + STACK_ENTRY_SIZE), 0, 0);
-		instructions[2].set(Opcodes::CL, Argument(f->getAddress()), 0, 0);
 	}
 
 	void Parser::stmts()
@@ -649,9 +661,6 @@ namespace cflat
 		if (!f)
 			throw exceptions::UNDEFINED_SYMBOL;
 
-		// push return value space /// FIXME: for now only 1 return value
-		instructions.push_back(Instruction(Opcodes::PUSH, Argument(STACK_ENTRY_SIZE), 0, 0));
-
 		// push argument space
 		int nargs = 0;
 		int pid = instructions.size();
@@ -666,13 +675,14 @@ namespace cflat
 				lexer->next();
 			}
 			nargs++;
-			boolexpr(-nargs * STACK_ENTRY_SIZE);
+			boolexpr(-(nargs + 1) * STACK_ENTRY_SIZE);
 		}
 		
-		instructions.push_back(Instruction(Opcodes::LDI, Argument(-(nargs + 1) * STACK_ENTRY_SIZE), Argument(nargs), 0));
+		instructions.push_back(Instruction(Opcodes::LDI, Argument(-(nargs + 2) * STACK_ENTRY_SIZE), Argument(nargs), 0));
 
-		// push n-arguments + nargs + ra space
-		instructions.push_back(Instruction(Opcodes::PUSH, Argument((nargs + 2) * STACK_ENTRY_SIZE), 0, 0));
+		// push return value space /// FIXME: for now only 1 return value
+		// push return-value + n-arguments + nargs + ra space //
+		instructions.push_back(Instruction(Opcodes::PUSH, Argument((nargs + 3) * STACK_ENTRY_SIZE), 0, 0));
 
 		if (f->isExternal())
 		{
@@ -688,9 +698,7 @@ namespace cflat
 		else
 			instructions.push_back(Instruction(Opcodes::CL, Argument(f->getAddress()), 0, 0));
 
-		instructions.push_back(Instruction(Opcodes::POP, Argument((nargs + 2) * STACK_ENTRY_SIZE), 0, 0));
-
-		instructions.push_back(Instruction(Opcodes::POP, Argument(STACK_ENTRY_SIZE), 0, 0));
+		instructions.push_back(Instruction(Opcodes::POP, Argument((nargs + 3) * STACK_ENTRY_SIZE), 0, 0));
 
 		lexer->next();
 
