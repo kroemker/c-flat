@@ -25,6 +25,10 @@ namespace cflat
 		Exception* parsenext();
 		char* getErrorString() { return errorString; }
 		bool isError() { return error; }
+		int getGlobalStackSize() { return globalStackSize; }
+
+		Variable*					getVariable(char * name);
+		Function*					getFunction(char * name);
 
 		std::vector<Instruction>	instructions;
 	private:
@@ -44,8 +48,6 @@ namespace cflat
 		void						decls(bool allowFuncs);
 		int							functionCall(char* name);
 		void						removeAllNonGlobals();
-		Variable*					getVariable(char * name);
-		Function*					getFunction(char * name);
 
 		Lexer*						lexer;
 		char						errorString[128];

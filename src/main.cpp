@@ -29,7 +29,10 @@ int main(int argc, char* argv[])
 
 			interpreter.printInstructions();
 
-			interpreter.callFunction("main");
+			int arg = 60;
+			interpreter.initStack();
+			interpreter.callFunction("fib", 1, arg);
+			printf("\nfib(%d) = %d\n", arg, interpreter.getReturnValue());
 		}
 		else
 		{

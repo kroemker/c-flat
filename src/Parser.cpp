@@ -83,6 +83,8 @@ namespace cflat
 				break;
 			}
 		}
+		// add yield instruction for library usage
+		instructions.push_back(Instruction(Opcodes::YLD, 0, 0, 0));
 		
 		// handle entry point
 		if (!entryPoint)

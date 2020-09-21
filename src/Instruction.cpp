@@ -106,7 +106,7 @@ void cflat::Instruction::execute(Stack* stackPtr)
 		if (sizeof(ExternalFunctionPtr) == 4)
 			f = (ExternalFunctionPtr)(a0.i);
 		else if (sizeof(ExternalFunctionPtr) == 8)
-			f = (ExternalFunctionPtr)((a0.i << 32) | a1.i);
+			f = (ExternalFunctionPtr)(((uint64_t)a0.i << 32) | a1.i);
 		else
 			throw exceptions::NOT_IMPLEMENTED;
 		f(stack);
@@ -254,6 +254,8 @@ void cflat::Instruction::execute(Stack* stackPtr)
 	case Opcodes::SUBF:
 		STACK(a0.i).f = STACK(a1.i).f - STACK(a2.i).f;
 		PC++;
+		break;
+	case Opcodes::YLD:
 		break;
 	}
 }

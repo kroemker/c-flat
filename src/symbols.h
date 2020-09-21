@@ -5,7 +5,7 @@
 #define STACK_ENTRY_WIDTH	32
 #define STACK_ENTRY_SIZE	(STACK_ENTRY_WIDTH / 8)
 
-#define STACK_SIZE			0x400
+#define STACK_SIZE			(0x400 * 0x400)	// 1 MB stack
 #define STACK_NUM_ENTRIES	(STACK_SIZE / STACK_ENTRY_SIZE)
 
 #define SP					stack[STACK_NUM_ENTRIES - 1].i
@@ -19,7 +19,8 @@
 #define KEYWORDTYPES		512
 #define KEYWORDCOUNT		23
 
-#define SAFEDEL(p) if(p)delete p; p = NULL
+#define SAFEDEL(p)	if(p)delete p; p = NULL
+#define SAFEDELA(p) if(p)delete[] p; p = NULL
 
 namespace cflat
 {
@@ -163,9 +164,10 @@ namespace cflat
 		// conversion
 		CTF,
 		CTI,
-		// end
+		// control
 		INIT,
 		Q,
+		YLD,
 	};
 
 	extern char* opcodes_s[];

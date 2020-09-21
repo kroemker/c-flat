@@ -118,9 +118,10 @@ namespace cflat
 		// conversion
 		"CTF",
 		"CTI",
-		// start end
+		// control
 		"INIT",
 		"Q",
+		"YLD",
 	};
 
 	int opcodes_nargs[] =
@@ -135,6 +136,6 @@ namespace cflat
 		3, 3, 3, 3, 3, 3, // relational
 		1, 2, 2, 0, 1, 1, // jump
 		2, 2, // conversion
-		0, 0
+		0, 0, 0, // control
 	};
 }
