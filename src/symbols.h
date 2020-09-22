@@ -1,18 +1,16 @@
 #pragma once
 
 #include <cstring>
+#include <cflat.h>
 
 #define STACK_ENTRY_WIDTH	32
 #define STACK_ENTRY_SIZE	(STACK_ENTRY_WIDTH / 8)
 
-#define STACK_SIZE			(0x400 * 0x400)	// 1 MB stack
-#define STACK_NUM_ENTRIES	(STACK_SIZE / STACK_ENTRY_SIZE)
-
-#define SP					stack[STACK_NUM_ENTRIES - 1].i
-#define PC					stack[STACK_NUM_ENTRIES - 2].i
-#define STACK(n)			stack[(SP + (n)) / STACK_ENTRY_SIZE]
-#define GLOBAL(n)			stack[STACK_NUM_ENTRIES - ((n) / STACK_ENTRY_SIZE) - 1]
-#define STACK_INBOUNDS(n)	(((SP + (n)) / STACK_ENTRY_SIZE) < STACK_NUM_ENTRIES)
+#define SP					((StackContext*)stack)->sp
+#define PC					((StackContext*)stack)->pc
+#define STACK(n)			stack[(sizeof(StackContext) + SP + (n)) / STACK_ENTRY_SIZE]
+#define GLOBAL(n)			stack[((sizeof(StackContext) + ((StackContext*)stack)->size - (n)) / STACK_ENTRY_SIZE) - 1]
+#define STACK_INBOUNDS(n)	(((SP + (n)) / STACK_ENTRY_SIZE) < ((StackContext*)stack)->entries)
 
 #define ID_SIZE_LIMIT		64
 #define TOKENTYPES			8
@@ -28,10 +26,19 @@ namespace cflat
 	{
 		int i;
 		float f;
+		char c[STACK_ENTRY_SIZE];
 
 		StackEntry() { memset(this, 0, sizeof(StackEntry)); }
 		StackEntry(int i) { this->i = i; }
 		StackEntry(float f) { this->f = f; }
+	};
+
+	struct StackContext
+	{
+		int size;
+		int entries;
+		int sp;
+		int pc;
 	};
 
 	typedef StackEntry Argument;

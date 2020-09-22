@@ -41,13 +41,13 @@ $(SUPPORTED_OS) clean:
 install: 
 	cd src && $(MKDIR) $(INSTALL_BIN) $(INSTALL_INC) $(INSTALL_LIB)
 	cd src && $(INSTALL_EXEC) $(PROG_NAME) $(INSTALL_BIN)
-	#cd src && $(INSTALL_DATA) $(LIB_NAME) $(INSTALL_INC)
+	cd src && $(INSTALL_DATA) $(INC_NAME) $(INSTALL_INC)
 	cd src && $(INSTALL_DATA) $(LIB_NAME) $(INSTALL_LIB)
 
 uninstall:
 	cd $(INSTALL_BIN) && $(RM) $(PROG_NAME)
 	cd $(INSTALL_LIB) && $(RM) $(LIB_NAME)
-	#cd $(INSTALL_INC) && $(RM) $(INC_NAME)
+	cd $(INSTALL_INC) && $(RM) $(INC_NAME)
 
 local:
 	$(MAKE) install INSTALL_TOP=../install

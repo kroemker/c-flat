@@ -37,7 +37,7 @@ namespace cflat
 		entryPoint = f;
 
 		if (instructions.size() >= 2)
-			instructions[2].set(Opcodes::CL, Argument(entryPoint->getAddress()), 0, 0);
+			instructions[1].set(Opcodes::CL, Argument(entryPoint->getAddress()), 0, 0);
 
 		return 1;
 	}
@@ -60,13 +60,9 @@ namespace cflat
 
 	void Parser::parse()
 	{
-		instructions.push_back(Instruction(Opcodes::INIT, 0, 0, 0));
-		// push sp, pc space
-		PUSH_GLOBAL();
-		PUSH_GLOBAL();
-		instructions.push_back(Instruction(Opcodes::PUSH, 0, 0, 0));
+		instructions.push_back(Instruction(Opcodes::PUSH, Argument(STACK_ENTRY_SIZE), 0, 0));
 		instructions.push_back(Instruction(Opcodes::CL, 0, 0, 0));
-		instructions.push_back(Instruction(Opcodes::POP, Argument(4), 0, 0));
+		instructions.push_back(Instruction(Opcodes::POP, Argument(STACK_ENTRY_SIZE), 0, 0));
 		instructions.push_back(Instruction(Opcodes::Q, 0, 0, 0));
 		
 		while (!lexer->isEndOfTokenList())
@@ -89,9 +85,6 @@ namespace cflat
 		// handle entry point
 		if (!entryPoint)
 			setEntryPoint("main");
-			
-		// push global space + 1 additional space for ra of the following call
-		instructions[1].set(Opcodes::PUSH, Argument(globalStackSize + STACK_ENTRY_SIZE), 0, 0);
 	}
 
 	void Parser::stmts()

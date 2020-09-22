@@ -16,7 +16,7 @@ namespace cflat
 		void print();
 		void translatePlaceholder(int placeholderStackStart, int translation);
 		void updateJumpTarget(int before, int after);
-		void execute(Stack* stack);
+		void execute(Stack stack);
 		int getOpcode() { return opcode; }
 	private:
 		int opcode;

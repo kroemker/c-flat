@@ -3,6 +3,8 @@
 #include <iostream>
 #include <cassert>
 
+#define ASSERT_ARG_IN_BOUNDS(arg)	assert(STACK_INBOUNDS(a ## arg.i))
+
 cflat::Instruction::Instruction(int opcode, Argument a0, Argument a1, Argument a2) : opcode(opcode), a0(a0), a1(a1), a2(a2)
 {
 }
@@ -58,46 +60,53 @@ void cflat::Instruction::updateJumpTarget(int before, int after)
 		a1 = after;
 }
 
-void cflat::Instruction::execute(Stack* stackPtr)
+void cflat::Instruction::execute(Stack stack)
 {
-	Stack stack = NULL;
-	if (stackPtr)
-		stack = *stackPtr;
-
 	switch (opcode)
 	{
 	case Opcodes::ADD:
-		assert(STACK_INBOUNDS(a0.i));
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).i + STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::ADDF:
-		assert(STACK_INBOUNDS(a0.i));
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).f = STACK(a1.i).f + STACK(a2.i).f;
 		PC++;
 		break;
 	case Opcodes::BAND:
-		assert(STACK_INBOUNDS(a0.i));
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).i & STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::BNOT:
-		assert(STACK_INBOUNDS(a0.i));
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = ~STACK(a1.i).i;
 		PC++;
 		break;
 	case Opcodes::BOR:
-		assert(STACK_INBOUNDS(a0.i));
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).i | STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::BXOR:
-		assert(STACK_INBOUNDS(a0.i));
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).i ^ STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::CL:
-		assert(STACK_INBOUNDS(0));
 		STACK(0).i = PC + 1;
 		PC = a0.i;
 		break;
@@ -113,40 +122,43 @@ void cflat::Instruction::execute(Stack* stackPtr)
 		PC++;
 		break;
 	case Opcodes::CTF:
-		assert(STACK_INBOUNDS(a0.i));
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
 		STACK(a0.i).f = (float)STACK(a1.i).i;
 		PC++;
 		break;
 	case Opcodes::CTI:
-		assert(STACK_INBOUNDS(a0.i));
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
 		STACK(a0.i).i = (int)STACK(a1.i).f;
 		PC++;
 		break;
 	case Opcodes::DIV:
-		assert(STACK_INBOUNDS(a0.i));
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).i / STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::DIVF:
-		assert(STACK_INBOUNDS(a0.i));
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).f = STACK(a1.i).f / STACK(a2.i).f;
 		PC++;
 		break;
 	case Opcodes::EQ:
-		assert(STACK_INBOUNDS(a0.i));
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).i == STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::EQF:
-		assert(STACK_INBOUNDS(a0.i));
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).f == STACK(a2.i).f;
-		PC++;
-		break;
-	case Opcodes::INIT:
-		*stackPtr = new StackEntry[STACK_NUM_ENTRIES];
-		stack = *stackPtr;
-		SP = STACK_SIZE;
-		PC = 0;
 		PC++;
 		break;
 	case Opcodes::J:
@@ -159,48 +171,71 @@ void cflat::Instruction::execute(Stack* stackPtr)
 			PC++;
 		break;
 	case Opcodes::JR:
-		assert(STACK_INBOUNDS(0));
+		ASSERT_ARG_IN_BOUNDS(0);
 		PC = STACK(0).i;
 		break;
 	case Opcodes::JT:
+		ASSERT_ARG_IN_BOUNDS(0);
 		if (STACK(a0.i).i)
 			PC = a1.i;
 		else
 			PC++;
 		break;
 	case Opcodes::LAND:
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).i && STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::LDF:
+		ASSERT_ARG_IN_BOUNDS(0);
 		STACK(a0.i).f = a1.f;
 		PC++;
 		break;
 	case Opcodes::LDI:
+		ASSERT_ARG_IN_BOUNDS(0);
 		STACK(a0.i).i = a1.i;
 		PC++;
 		break;
 	case Opcodes::LET:
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).i <= STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::LETF:
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).f <= STACK(a2.i).f;
 		PC++;
 		break;
 	case Opcodes::LNOT:
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
 		STACK(a0.i).i = !STACK(a1.i).i;
 		PC++;
 		break;
 	case Opcodes::LOR:
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).i || STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::LT:
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).i < STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::LTF:
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).f < STACK(a2.i).f;
 		PC++;
 		break;
@@ -221,14 +256,23 @@ void cflat::Instruction::execute(Stack* stackPtr)
 		PC++;
 		break;
 	case Opcodes::MOD:
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).i % STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::MULT:
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).i * STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::MULTF:
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).f = STACK(a1.i).f * STACK(a2.i).f;
 		PC++;
 		break;
@@ -237,21 +281,27 @@ void cflat::Instruction::execute(Stack* stackPtr)
 		break;
 	case Opcodes::POP:
 		SP += a0.i;
+		assert(SP <= ((StackContext*)stack)->size);
 		PC++;
 		break;
 	case Opcodes::PUSH:
 		SP -= a0.i;
+		assert(SP > 0);
 		PC++;
 		break;
 	case Opcodes::Q:
-		delete[] (*stackPtr);
-		*stackPtr = NULL;
 		break;
 	case Opcodes::SUB:
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).i - STACK(a2.i).i;
 		PC++;
 		break;
 	case Opcodes::SUBF:
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).f = STACK(a1.i).f - STACK(a2.i).f;
 		PC++;
 		break;
