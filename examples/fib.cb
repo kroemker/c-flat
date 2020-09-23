@@ -1,0 +1,23 @@
+function fib(int n)
+{
+    if (n <= 0) 
+        return 0;
+    else if (n == 1) 
+        return 1;
+    else
+        return fib(n-1) + fib(n-2);
+}
+
+function main()
+{
+    int input;
+    int i;
+
+    input = 10;
+    i = 0;
+    while (i < input)
+    {
+        print(fib(i));
+        i = i + 1;
+    }
+}
