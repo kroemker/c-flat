@@ -682,11 +682,11 @@ namespace cflat
 		if (f->isExternal())
 		{
 			if (sizeof(ExternalFunctionPtr) == 4)
-				instructions.push_back(Instruction(Opcodes::CLE, Argument((int)f->getExternalFunctionPtr()), 0, 0));
+				instructions.push_back(Instruction(Opcodes::CLE, Argument((int)(int64_t)f->getExternalFunctionPtr()), 0, 0));
 			else if (sizeof(ExternalFunctionPtr) == 8)
 				instructions.push_back(Instruction(Opcodes::CLE, 
 					Argument((int)((int64_t)f->getExternalFunctionPtr() >> 32)), 
-					Argument((int)f->getExternalFunctionPtr()), 0));
+					Argument((int)(int64_t)f->getExternalFunctionPtr()), 0));
 			else
 				throw NOT_IMPLEMENTED;
 		}

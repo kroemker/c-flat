@@ -24,7 +24,7 @@ endif
 
 ifeq ($(DETECTED_OS), Linux)
 	PROG_NAME= cflat
-	LIB_NAME= cflat.a
+	LIB_NAME= libcflat.a
 	INC_NAME= cflat.h
 	INSTALL_TOP= /usr/local
 	INSTALL_BIN= $(INSTALL_TOP)/bin
