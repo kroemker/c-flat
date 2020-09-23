@@ -34,8 +34,12 @@ namespace cflat
 	private:
 		DataType					boolexpr(int stackSlot);
 		DataType					joinexpr(int stackSlot);
+		DataType					bitorexpr(int stackSlot);
+		DataType					bitxorexpr(int stackSlot);
+		DataType					bitandexpr(int stackSlot);
 		DataType					equalityexpr(int stackSlot);
 		DataType					relexpr(int stackSlot);
+		DataType 					shiftexpr(int stackSlot);
 		DataType					mathexpr(int stackSlot);
 		DataType					mathterm(int stackSlot);
 		DataType					mathunary(int stackSlot);

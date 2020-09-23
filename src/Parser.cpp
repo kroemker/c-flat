@@ -194,7 +194,7 @@ namespace cflat
 	DataType Parser::boolexpr(int stackSlot)
 	{
 		DataType t = joinexpr(stackSlot);
-		if (lexer->look()->gettype() == Keywords::OR)
+		while (lexer->look()->gettype() == Keywords::OR)
 		{
 			lexer->next();
 			int newSlot;
@@ -207,20 +207,20 @@ namespace cflat
 				Argument(stackSlot),
 				Argument(newSlot)));
 
-			return DataType::S32;
+			t = DataType::S32;
 		}
 		return t;
 	}
 
 	DataType Parser::joinexpr(int stackSlot)
 	{
-		DataType t = equalityexpr(stackSlot);
-		if (lexer->look()->gettype() == Keywords::AND)
+		DataType t = bitorexpr(stackSlot);
+		while (lexer->look()->gettype() == Keywords::AND)
 		{
 			lexer->next();
 			int newSlot;
 			PUSH(newSlot);
-			DataType s = equalityexpr(newSlot);
+			DataType s = bitorexpr(newSlot);
 			POP();
 
 			instructions.push_back(Instruction(Opcodes::LAND,
@@ -228,7 +228,70 @@ namespace cflat
 				Argument(stackSlot),
 				Argument(newSlot)));
 
-			return DataType::S32;
+			t = DataType::S32;
+		}
+		return t;
+	}
+
+	DataType Parser::bitorexpr(int stackSlot)
+	{
+		DataType t = bitxorexpr(stackSlot);
+		while (lexer->look()->gettype() == '|')
+		{
+			lexer->next();
+			int newSlot;
+			PUSH(newSlot);
+			DataType s = bitxorexpr(newSlot);
+			POP();
+
+			instructions.push_back(Instruction(Opcodes::BOR,
+				Argument(stackSlot),
+				Argument(stackSlot),
+				Argument(newSlot)));
+
+			t = DataType::S32;
+		}
+		return t;
+	}
+
+	DataType Parser::bitxorexpr(int stackSlot)
+	{
+		DataType t = bitandexpr(stackSlot);
+		while (lexer->look()->gettype() == '^')
+		{
+			lexer->next();
+			int newSlot;
+			PUSH(newSlot);
+			DataType s = bitandexpr(newSlot);
+			POP();
+
+			instructions.push_back(Instruction(Opcodes::BXOR,
+				Argument(stackSlot),
+				Argument(stackSlot),
+				Argument(newSlot)));
+
+			t = DataType::S32;
+		}
+		return t;
+	}
+
+	DataType Parser::bitandexpr(int stackSlot)
+	{
+		DataType t = equalityexpr(stackSlot);
+		while (lexer->look()->gettype() == '&')
+		{
+			lexer->next();
+			int newSlot;
+			PUSH(newSlot);
+			DataType s = equalityexpr(newSlot);
+			POP();
+
+			instructions.push_back(Instruction(Opcodes::BAND,
+				Argument(stackSlot),
+				Argument(stackSlot),
+				Argument(newSlot)));
+
+			t = DataType::S32;
 		}
 		return t;
 	}
@@ -299,13 +362,13 @@ namespace cflat
 
 	DataType Parser::relexpr(int stackSlot)
 	{
-		DataType t = mathexpr(stackSlot);
+		DataType t = shiftexpr(stackSlot);
 		if (lexer->look()->gettype() == '<')
 		{
 			lexer->next();
 			int newSlot;
 			PUSH(newSlot);
-			DataType s = mathexpr(newSlot);
+			DataType s = shiftexpr(newSlot);
 			POP();
 
 			if (generalizedTypecast(t, s, stackSlot, newSlot) == DataType::F32)
@@ -330,7 +393,7 @@ namespace cflat
 			lexer->next();
 			int newSlot;
 			PUSH(newSlot);
-			DataType s = mathexpr(newSlot);
+			DataType s = shiftexpr(newSlot);
 			POP();
 
 			if (generalizedTypecast(t, s, stackSlot, newSlot) == DataType::F32)
@@ -355,7 +418,7 @@ namespace cflat
 			lexer->next();
 			int newSlot;
 			PUSH(newSlot);
-			DataType s = mathexpr(newSlot);
+			DataType s = shiftexpr(newSlot);
 			POP();
 
 			if (generalizedTypecast(t, s, stackSlot, newSlot) == DataType::F32)
@@ -381,7 +444,7 @@ namespace cflat
 			lexer->next();
 			int newSlot;
 			PUSH(newSlot);
-			DataType s = mathexpr(newSlot);
+			DataType s = shiftexpr(newSlot);
 			POP();
 
 			if (generalizedTypecast(t, s, stackSlot, newSlot) == DataType::F32)
@@ -399,6 +462,41 @@ namespace cflat
 					Argument(newSlot),
 					Argument(stackSlot)));
 				return DataType::S32;
+			}
+		}
+		return t;
+	}
+
+	DataType Parser::shiftexpr(int stackSlot)
+	{
+		DataType t = mathexpr(stackSlot);
+		while ((lexer->look()->gettype() == TokenTypes::SHIFT_LEFT) || (lexer->look()->gettype() == TokenTypes::SHIFT_RIGHT))
+		{
+			if (lexer->look()->gettype() == TokenTypes::SHIFT_LEFT)
+			{
+				lexer->next();
+				int newSlot;
+				PUSH(newSlot);
+				DataType t = mathexpr(newSlot);
+				POP();
+
+				instructions.push_back(Instruction(Opcodes::SL,
+					Argument(stackSlot),
+					Argument(stackSlot),
+					Argument(newSlot)));
+			}
+			else if (lexer->look()->gettype() == TokenTypes::SHIFT_RIGHT)
+			{
+				lexer->next();
+				int newSlot;
+				PUSH(newSlot);
+				DataType t = mathexpr(newSlot);
+				POP();
+
+				instructions.push_back(Instruction(Opcodes::SR,
+					Argument(stackSlot),
+					Argument(stackSlot),
+					Argument(newSlot)));
 			}
 		}
 		return t;
@@ -468,7 +566,7 @@ namespace cflat
 	DataType Parser::mathterm(int stackSlot)
 	{
 		DataType t = mathunary(stackSlot);
-		while ((lexer->look()->gettype() == '*') || (lexer->look()->gettype() == '/'))
+		while ((lexer->look()->gettype() == '*') || (lexer->look()->gettype() == '/') || (lexer->look()->gettype() == '%'))
 		{
 			if (lexer->look()->gettype() == '*')
 			{
@@ -521,6 +619,21 @@ namespace cflat
 					t = DataType::S32;
 				}
 			}
+			else if (lexer->look()->gettype() == '%')
+			{
+				lexer->next();
+				int newSlot;
+				PUSH(newSlot);
+				DataType s = mathunary(newSlot);
+				POP();
+
+				
+				instructions.push_back(Instruction(Opcodes::MOD,
+					Argument(stackSlot),
+					Argument(stackSlot),
+					Argument(newSlot)));
+				t = DataType::S32;
+			}
 		}
 		return t;
 	}
@@ -552,6 +665,13 @@ namespace cflat
 			lexer->next();
 			t = mathunary(stackSlot);
 			instructions.push_back(Instruction(Opcodes::LNOT,
+				Argument(stackSlot), 0, 0));
+		}
+		else if (lexer->look()->gettype() == '~')
+		{
+			lexer->next();
+			t = mathunary(stackSlot);
+			instructions.push_back(Instruction(Opcodes::BNOT,
 				Argument(stackSlot), 0, 0));
 		}
 		else

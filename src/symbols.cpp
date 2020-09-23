@@ -11,6 +11,8 @@ namespace cflat
 		"TYPE_LESS_EQUALS",
 		"TYPE_UNEQUALS",
 		"TYPE_EQUALS",
+		"TYPE_SHIFT_LEFT",
+		"TYPE_SHIFT_RIGHT",
 		"TYPE_ID"
 	};
 
@@ -97,6 +99,8 @@ namespace cflat
 		"BOR",
 		"BAND",
 		"BXOR",
+		"SL",
+		"SR",
 		// logical
 		"LNOT",
 		"LAND",
@@ -131,7 +135,7 @@ namespace cflat
 		3, 3, 3, 2, 3, 3, // data
 		3, 3, 3, 3, 3, // int arithmetic
 		3, 3, 3, 3, // float arithmetic
-		2, 3, 3, 3, // bit
+		2, 3, 3, 3, 3, 3, // bit
 		3, 3, 3, // logical
 		3, 3, 3, 3, 3, 3, // relational
 		1, 2, 2, 0, 1, 1, // jump

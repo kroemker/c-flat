@@ -291,6 +291,20 @@ void cflat::Instruction::execute(Stack stack)
 		break;
 	case Opcodes::Q:
 		break;
+	case Opcodes::SL:
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
+		STACK(a0.i).i = STACK(a1.i).i << STACK(a2.i).i;
+		PC++;
+		break;
+	case Opcodes::SR:
+		ASSERT_ARG_IN_BOUNDS(0);
+		ASSERT_ARG_IN_BOUNDS(1);
+		ASSERT_ARG_IN_BOUNDS(2);
+		STACK(a0.i).i = STACK(a1.i).i >> STACK(a2.i).i;
+		PC++;
+		break;
 	case Opcodes::SUB:
 		ASSERT_ARG_IN_BOUNDS(0);
 		ASSERT_ARG_IN_BOUNDS(1);
@@ -307,5 +321,7 @@ void cflat::Instruction::execute(Stack stack)
 		break;
 	case Opcodes::YLD:
 		break;
+	default:
+		assert(false);
 	}
 }

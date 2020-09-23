@@ -1,5 +1,5 @@
 # c-flat
-C♭ is an embeddable stack-based scripting language based on C. It is aimed at tasks that require a sandbox environment but still need access to low-level bit manipulations.
+C♭ is an embeddable stack-based scripting language based on C. It is aimed at tasks that require a sandbox environment but also need access to low-level operations such as bit manipulation.
 C♭ code is compiled into byte code instructions that operate solely on the stack.
 
 ## Features

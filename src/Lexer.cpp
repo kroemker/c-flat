@@ -106,6 +106,11 @@ namespace cflat
 				inputIndex++;
 				return new Token(TokenTypes::LESS_EQUALS);
 			}
+			else if (input[inputIndex] == '<')
+			{
+				inputIndex++;
+				return new Token(TokenTypes::SHIFT_LEFT);
+			}
 			else
 				return new Token('<');
 		case '>':
@@ -114,6 +119,11 @@ namespace cflat
 			{
 				inputIndex++;
 				return new Token(TokenTypes::GREATER_EQUALS);
+			}
+			else if (input[inputIndex] == '>')
+			{
+				inputIndex++;
+				return new Token(TokenTypes::SHIFT_RIGHT);
 			}
 			else
 				return new Token('>');
