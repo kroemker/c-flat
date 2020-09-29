@@ -32,6 +32,7 @@ namespace cflat
 
 		std::vector<Instruction>	instructions;
 	private:
+		DataType					assignexpr(int stackSlot);
 		DataType					boolexpr(int stackSlot);
 		DataType					joinexpr(int stackSlot);
 		DataType					bitorexpr(int stackSlot);
@@ -47,9 +48,8 @@ namespace cflat
 		DataType					generalizedTypecast(DataType t, DataType s, int tSlot, int sSlot);
 		void						forcedTypecast(DataType t, DataType s, int tSlot);
 		void						stmts();
-		DataType					decl(bool allowFuncs);
+		DataType					globaldecl();
 		DataType					datatype();
-		void						decls(bool allowFuncs);
 		int							functionCall(char* name);
 		void						removeAllNonGlobals();
 

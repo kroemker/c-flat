@@ -37,7 +37,7 @@ namespace cflat
 		"f32",
 		"int",
 		"float",
-		"function",
+		"void",
 	};
 
     const char* exceptions_s[] =

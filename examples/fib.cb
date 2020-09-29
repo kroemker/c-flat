@@ -1,4 +1,4 @@
-function fib(int n)
+fib(n)
 {
     if (n <= 0) 
         return 0;
@@ -8,13 +8,10 @@ function fib(int n)
         return fib(n-1) + fib(n-2);
 }
 
-function main()
+main()
 {
-    int input;
-    int i;
+    int input = 10, i = 0;
 
-    input = 10;
-    i = 0;
     while (i < input)
     {
         print(fib(i));

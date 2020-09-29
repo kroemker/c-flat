@@ -23,6 +23,7 @@ namespace cflat
 		int		getExpressionCount() { return numExpr; }
 		int		getTokenIndex() { return tokenIndex; }
 		Token*  look() { return tokens[tokenIndex]; }
+		Token*  lookahead(int t) { return tokens[tokenIndex + t]; }
 		bool	isEndOfTokenList() { return(tokens.size() == tokenIndex); }
 		bool	isPrelexed() { return prelexed; }
 	private:

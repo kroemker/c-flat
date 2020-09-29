@@ -25,7 +25,7 @@ namespace cflat
 
 	void Parser::registerExternalFunction(char * name, ExternalFunctionPtr f)
 	{
-		functions.push_back(Function(name, f));
+		functions.push_back(Function(name, DataType::VOID, f));
 	}
 
 	int Parser::setEntryPoint(char* functionName)
@@ -46,7 +46,7 @@ namespace cflat
 	{
 		try
 		{
-			if (decl(true) == DataType::NO_TYPE)
+			if (globaldecl() == DataType::NO_TYPE)
 				throw exceptions::DECLARATION_EXPECTED;
 		}
 		catch (exceptions i)
@@ -64,16 +64,16 @@ namespace cflat
 		instructions.push_back(Instruction(Opcodes::CL, 0, 0, 0));
 		instructions.push_back(Instruction(Opcodes::POP, Argument(STACK_ENTRY_SIZE), 0, 0));
 		instructions.push_back(Instruction(Opcodes::Q, 0, 0, 0));
-		
+
 		while (!lexer->isEndOfTokenList())
 		{
 			Exception* exc = parsenext();
 			if (exc)
 			{
-				sprintf(errorString, "Line: %d, Expression: %d @ %s\nError: %s", 
-					exc->gettoken()->getline(), 
+				sprintf(errorString, "Line: %d, Expression: %d @ %s\nError: %s",
+					exc->gettoken()->getline(),
 					exc->getexprnum(),
-					exc->gettoken()->tostring(), 
+					exc->gettoken()->tostring(),
 					exc->tostring());
 				error = true;
 				break;
@@ -81,7 +81,7 @@ namespace cflat
 		}
 		// add yield instruction for library usage
 		instructions.push_back(Instruction(Opcodes::YLD, 0, 0, 0));
-		
+
 		// handle entry point
 		if (!entryPoint)
 			setEntryPoint("main");
@@ -108,7 +108,7 @@ namespace cflat
 			int stackSlot;
 			PUSH(stackSlot);
 			int start = instructions.size();
-			boolexpr(stackSlot);
+			assignexpr(stackSlot);
 			int jid = instructions.size();
 			instructions.push_back(Instruction(Opcodes::JF, 0, 0, 0));
 			stmts();
@@ -121,7 +121,7 @@ namespace cflat
 			lexer->next();
 			int stackSlot;
 			PUSH(stackSlot);
-			boolexpr(stackSlot);
+			assignexpr(stackSlot);
 			int jid = instructions.size();
 			instructions.push_back(Instruction(Opcodes::JF, 0, 0, 0));
 			stmts();
@@ -138,57 +138,93 @@ namespace cflat
 				instructions[jid].set(Opcodes::JF, Argument(stackSlot), Argument((int)instructions.size()), 0);
 			POP();
 		}
-		else if (t0->gettype() == TokenTypes::ID)
-		{
-			lexer->next();
-			char* ident = dynamic_cast<Identifier*>(t0)->get();
-			Token* t1 = lexer->look();
-			if (t1->gettype() == '=')
-			{
-				Variable* v = getVariable(ident);
-				if (v == NULL)
-					throw exceptions::UNDEFINED_SYMBOL;
-
-				lexer->next();
-				if (v->isglobal())
-				{
-					int stackSlot;
-					PUSH(stackSlot);
-					DataType t = boolexpr(stackSlot);
-					forcedTypecast(v->gettype(), t, stackSlot);
-					instructions.push_back(Instruction(Opcodes::MG, Argument(v->getstackslot()), Argument(stackSlot), 0));
-					POP();
-				}
-				else
-				{
-					DataType t = boolexpr(v->getstackslot());
-					forcedTypecast(v->gettype(), t, v->getstackslot());
-				}
-			}
-			else if (t1->gettype() == '(')
-			{
-				functionCall(ident);
-			}
-			else
-				throw exceptions::SYNTAX_ERROR;
-
-			if (lexer->look()->gettype() != ';')
-				throw exceptions::SEMICOLON_EXPECTED;
-			lexer->next();
-		}
 		else if (t0->gettype() == Keywords::RETURN)
 		{
 			lexer->next();
-			boolexpr(PLACEHOLDER_STACK_START);
+			assignexpr(PLACEHOLDER_STACK_START);
 			instructions.push_back(Instruction(Opcodes::J, Argument(FUNCTION_END_LABEL), 0, 0));
 
 			if (lexer->look()->gettype() != ';')
 				throw exceptions::SEMICOLON_EXPECTED;
 			lexer->next();
-
 		}
-		else if (decl(false) == DataType::NO_TYPE)
-			throw exceptions::INVALID_CHARACTER;
+		else
+		{
+			DataType t = datatype();
+
+			if (t != DataType::NO_TYPE)
+			{
+				bool cont;
+				do
+				{
+					Token* t1 = lexer->look();
+					if (t1->gettype() != TokenTypes::ID)
+						throw exceptions::ID_EXPECTED;
+
+					char* ident = dynamic_cast<Identifier*>(t1)->get();
+					int stackSlot = localStackSize;
+					variables.push_back(Variable(t, ident, stackSlot, false));
+					PUSH_LOCAL();
+
+					if (lexer->lookahead(1)->gettype() == '=')
+						assignexpr(stackSlot);
+					else
+						lexer->next();
+
+					if (lexer->look()->gettype() == ',')
+					{
+						cont = true;
+						lexer->next();
+					}
+					else
+						cont = false;
+				} while (cont);
+
+				if (lexer->look()->gettype() != ';')
+					throw exceptions::SEMICOLON_EXPECTED;
+			}
+			else
+			{
+				int stackSlot;
+				PUSH(stackSlot);
+				assignexpr(stackSlot);
+				POP();
+			}
+		}
+	}
+
+	DataType Parser::assignexpr(int stackSlot)
+	{
+		DataType t = DataType::NO_TYPE;
+		Token* t0 = lexer->look();
+
+		if (t0->gettype() == TokenTypes::ID && lexer->lookahead(1)->gettype() == '=')
+		{
+			lexer->next(); // '='
+			lexer->next();
+
+			char* ident = dynamic_cast<Identifier*>(t0)->get();
+			Variable* v = getVariable(ident);
+			if (v == NULL)
+				throw exceptions::UNDEFINED_SYMBOL;
+
+			if (v->isglobal())
+			{
+				t = assignexpr(stackSlot);
+				forcedTypecast(v->gettype(), t, stackSlot);
+				instructions.push_back(Instruction(Opcodes::MG, Argument(v->getstackslot()), Argument(stackSlot), 0));
+				t = v->gettype();
+			}
+			else
+			{
+				t = assignexpr(v->getstackslot());
+				forcedTypecast(v->gettype(), t, v->getstackslot());
+				t = v->gettype();
+			}
+		}
+		else
+			t = boolexpr(stackSlot);
+		return t;
 	}
 
 	DataType Parser::boolexpr(int stackSlot)
@@ -627,7 +663,7 @@ namespace cflat
 				DataType s = mathunary(newSlot);
 				POP();
 
-				
+
 				instructions.push_back(Instruction(Opcodes::MOD,
 					Argument(stackSlot),
 					Argument(stackSlot),
@@ -687,7 +723,7 @@ namespace cflat
 		case '(':
 		{
 			lexer->next();
-			DataType t = boolexpr(stackSlot);
+			DataType t = assignexpr(stackSlot);
 
 			if (lexer->look()->gettype() == ')')
 				lexer->next();
@@ -738,7 +774,7 @@ namespace cflat
 				instructions.push_back(Instruction(Opcodes::MW,
 					Argument(stackSlot),
 					Argument(retSlot), 0));
-				return DataType::S32; // FIXME: make functions typed
+				return getFunction(ident)->getType();
 			}
 			else
 			{
@@ -753,12 +789,12 @@ namespace cflat
 					else if (typesizes[v->gettype()] == 2)
 						instructions.push_back(Instruction(Opcodes::MH,
 							Argument(stackSlot),
-							Argument(v->getstackslot()), 
+							Argument(v->getstackslot()),
 							Argument(v->isglobal())));
 					else if (typesizes[v->gettype()] == 4)
 						instructions.push_back(Instruction(Opcodes::MW,
 							Argument(stackSlot),
-							Argument(v->getstackslot()), 
+							Argument(v->getstackslot()),
 							Argument(v->isglobal())));
 				}
 				else
@@ -790,9 +826,9 @@ namespace cflat
 				lexer->next();
 			}
 			nargs++;
-			boolexpr(-(nargs + 1) * STACK_ENTRY_SIZE);
+			assignexpr(-(nargs + 1) * STACK_ENTRY_SIZE);
 		}
-		
+
 		instructions.push_back(Instruction(Opcodes::LDI, Argument(-(nargs + 2) * STACK_ENTRY_SIZE), Argument(nargs), 0));
 
 		// push return value space /// FIXME: for now only 1 return value
@@ -804,8 +840,8 @@ namespace cflat
 			if (sizeof(ExternalFunctionPtr) == 4)
 				instructions.push_back(Instruction(Opcodes::CLE, Argument((int)(int64_t)f->getExternalFunctionPtr()), 0, 0));
 			else if (sizeof(ExternalFunctionPtr) == 8)
-				instructions.push_back(Instruction(Opcodes::CLE, 
-					Argument((int)((int64_t)f->getExternalFunctionPtr() >> 32)), 
+				instructions.push_back(Instruction(Opcodes::CLE,
+					Argument((int)((int64_t)f->getExternalFunctionPtr() >> 32)),
 					Argument((int)(int64_t)f->getExternalFunctionPtr()), 0));
 			else
 				throw NOT_IMPLEMENTED;
@@ -886,15 +922,6 @@ namespace cflat
 		}
 	}
 
-	void Parser::decls(bool global)
-	{
-		DataType declType;
-		while ((declType = decl(global)) != NO_TYPE)
-		{
-			lexer->next();
-		}
-	}
-
 	DataType Parser::datatype()
 	{
 		DataType varType = DataType::NO_TYPE;
@@ -913,8 +940,8 @@ namespace cflat
 			varType = DataType::S32;
 		else if (t1->gettype() == Keywords::T_F32 || t1->gettype() == Keywords::FLOAT)
 			varType = DataType::F32;
-		else if (t1->gettype() == Keywords::FUNCTION)
-			varType = DataType::FUNC;
+		else if (t1->gettype() == Keywords::T_VOID)
+			varType = DataType::VOID;
 
 		if (varType != DataType::NO_TYPE)
 			lexer->next();
@@ -922,35 +949,38 @@ namespace cflat
 		return varType;
 	}
 
-	DataType Parser::decl(bool global)
+	DataType Parser::globaldecl()
 	{
 		DataType varType = datatype();
+		Token* t2 = lexer->look();
+
+		// function decls without type default to s32
+		if (varType == DataType::NO_TYPE && t2->gettype() == TokenTypes::ID && lexer->lookahead(1)->gettype() == '(')
+			varType = DataType::S32;
+
 		if (varType != DataType::NO_TYPE)
 		{
-			Token* t2 = lexer->look();
 			if (t2->gettype() != TokenTypes::ID)
 				throw exceptions::ID_EXPECTED;
 
 			char* ident = dynamic_cast<Identifier*>(t2)->get();
 			Variable* v = getVariable(ident);
-			if (v)
+			Function* f = getFunction(ident);
+			if (v || f)
 				throw exceptions::SYMBOL_REDEFINITION;
 
-			if (varType == DataType::FUNC)
+			lexer->next();
+			if (lexer->look()->gettype() == '(')
 			{
 				int functionStart = instructions.size();
 				int nargs = 0;
-
-				lexer->next();
-				if (lexer->look()->gettype() != '(')
-					throw exceptions::OPENBRACKET_EXPECTED;
 
 				// push return value placeholder
 				PUSH_PLACEHOLDER();
 
 				// parse arguments
 				lexer->next();
-				while (lexer->look()->gettype() != ')')
+				while (!lexer->isEndOfTokenList() && lexer->look()->gettype() != ')')
 				{
 					if (nargs > 0)
 					{
@@ -961,7 +991,7 @@ namespace cflat
 
 					DataType argType = datatype();
 					if (argType == DataType::NO_TYPE)
-						throw exceptions::TYPE_EXPECTED;
+						argType = DataType::S32;
 
 					Token* argNameId = lexer->look();
 					if (argNameId->gettype() != TokenTypes::ID)
@@ -985,7 +1015,7 @@ namespace cflat
 				variables.push_back(Variable(DataType::U32, "__ra",
 					placeholderStack, false));
 
-				functions.push_back(Function(ident, functionStart));
+				functions.push_back(Function(ident, varType, functionStart));
 				instructions.push_back(Instruction(Opcodes::PUSH, 0, 0, 0));
 
 				// do function
@@ -1011,17 +1041,9 @@ namespace cflat
 			}
 			else
 			{
-				if (global)
-				{
-					variables.push_back(Variable(varType, ident, globalStackSize, true));
-					PUSH_GLOBAL();
-				}
-				else
-				{
-					variables.push_back(Variable(varType, ident, localStackSize, false));
-					PUSH_LOCAL();
-				}
-				lexer->next();
+				variables.push_back(Variable(varType, ident, globalStackSize, true));
+				PUSH_GLOBAL();
+
 				if (lexer->look()->gettype() != ';')
 					throw exceptions::SEMICOLON_EXPECTED;
 				lexer->next();

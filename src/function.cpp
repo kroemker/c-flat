@@ -2,11 +2,11 @@
 
 namespace cflat
 {
-    Function::Function(char* name, int address) : name(name), address(address), external(false) 
+	Function::Function(char* name, DataType type, int address) : name(name), address(address), external(false), type(type)
     {
     }
 
-	Function::Function(char* name, ExternalFunctionPtr functionPtr) : name(name), functionPtr(functionPtr), external(true)
+	Function::Function(char* name, DataType type, ExternalFunctionPtr functionPtr) : name(name), functionPtr(functionPtr), external(true), type(type)
     {
     }
 

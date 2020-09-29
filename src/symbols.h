@@ -83,7 +83,7 @@ namespace cflat
 		T_F32,
 		INT,
 		FLOAT,
-		FUNCTION,
+		T_VOID,
 	};
 
 	extern const char* keywords_s[];
@@ -118,7 +118,7 @@ namespace cflat
 		S16,
 		S32,
 		F32,
-		FUNC
+		VOID
 	};
 
 	extern int typesizes[];
