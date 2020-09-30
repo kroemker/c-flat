@@ -13,6 +13,8 @@ namespace cflat
 		"TYPE_EQUALS",
 		"TYPE_SHIFT_LEFT",
 		"TYPE_SHIFT_RIGHT",
+		"TYPE_INCREMENT",
+		"TYPE_DECREMENT",
 		"TYPE_ID"
 	};
 
@@ -89,6 +91,8 @@ namespace cflat
 		"MULT",
 		"DIV",
 		"MOD",
+		"INC",
+		"DEC",
 		// float arithmetic
 		"ADDF",
 		"SUBF",
@@ -133,7 +137,7 @@ namespace cflat
 		0, // NOP
 		1, 1, // stack
 		3, 3, 3, 2, 3, 3, // data
-		3, 3, 3, 3, 3, // int arithmetic
+		3, 3, 3, 3, 3, 1, 1, // int arithmetic
 		3, 3, 3, 3, // float arithmetic
 		2, 3, 3, 3, 3, 3, // bit
 		3, 3, 3, // logical

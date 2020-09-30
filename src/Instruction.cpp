@@ -133,6 +133,14 @@ void cflat::Instruction::execute(Stack stack)
 		STACK(a0.i).i = (int)STACK(a1.i).f;
 		PC++;
 		break;
+	case Opcodes::DEC:
+		ASSERT_ARG_IN_BOUNDS(0);
+		if (a1.i)
+			GLOBAL(a0.i).i--;
+		else
+			STACK(a0.i).i--;
+		PC++;
+		break;
 	case Opcodes::DIV:
 		ASSERT_ARG_IN_BOUNDS(0);
 		ASSERT_ARG_IN_BOUNDS(1);
@@ -159,6 +167,14 @@ void cflat::Instruction::execute(Stack stack)
 		ASSERT_ARG_IN_BOUNDS(1);
 		ASSERT_ARG_IN_BOUNDS(2);
 		STACK(a0.i).i = STACK(a1.i).f == STACK(a2.i).f;
+		PC++;
+		break;
+	case Opcodes::INC:
+		ASSERT_ARG_IN_BOUNDS(0);
+		if (a1.i)
+			GLOBAL(a0.i).i++;
+		else
+			STACK(a0.i).i++;
 		PC++;
 		break;
 	case Opcodes::J:

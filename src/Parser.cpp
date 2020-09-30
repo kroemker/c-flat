@@ -2,6 +2,7 @@
 
 #define PLACEHOLDER_STACK_START		-200
 #define FUNCTION_END_LABEL			-3000
+#define INVALID_STACK_SLOT			-40000000
 
 #define PUSH_PLACEHOLDER()			{ placeholderStack -= STACK_ENTRY_SIZE; }
 #define RESET_PLACEHOLDER_STACK()	{ placeholderStack = PLACEHOLDER_STACK_START; }
@@ -154,8 +155,7 @@ namespace cflat
 
 			if (t != DataType::NO_TYPE)
 			{
-				bool cont;
-				do
+				while (true)
 				{
 					Token* t1 = lexer->look();
 					if (t1->gettype() != TokenTypes::ID)
@@ -172,16 +172,14 @@ namespace cflat
 						lexer->next();
 
 					if (lexer->look()->gettype() == ',')
-					{
-						cont = true;
 						lexer->next();
-					}
 					else
-						cont = false;
-				} while (cont);
+						break;
+				};
 
 				if (lexer->look()->gettype() != ';')
 					throw exceptions::SEMICOLON_EXPECTED;
+				lexer->next();
 			}
 			else
 			{
@@ -710,10 +708,60 @@ namespace cflat
 			instructions.push_back(Instruction(Opcodes::BNOT,
 				Argument(stackSlot), 0, 0));
 		}
+		else if (lexer->look()->gettype() == TokenTypes::INCREMENT)
+		{
+			lexer->next();
+			Variable* var;
+			t = memexpr(stackSlot, &var);
+			instructions.push_back(Instruction(Opcodes::INC,
+				Argument(var->getstackslot()), Argument(var->isglobal()), 0));
+			loadVarToStack(stackSlot, var);
+		}
+		else if (lexer->look()->gettype() == TokenTypes::DECREMENT)
+		{
+			lexer->next();
+			Variable* var;
+			t = memexpr(stackSlot, &var);
+			instructions.push_back(Instruction(Opcodes::DEC,
+				Argument(var->getstackslot()), Argument(var->isglobal()), 0));
+			loadVarToStack(stackSlot, var);
+		}
 		else
 			t = factor(stackSlot);
 
 		return t;
+	}
+
+	DataType Parser::memexpr(int stackSlot, Variable** outvar)
+	{
+		Token* t0 = lexer->look();
+		if (t0->gettype() != TokenTypes::ID)
+			throw exceptions::ID_EXPECTED;
+
+		char* ident = dynamic_cast<Identifier*>(t0)->get();
+		Variable* v = getVariable(ident);
+		if (!v)
+			throw exceptions::UNDEFINED_SYMBOL;
+
+		loadVarToStack(stackSlot, v);
+
+		lexer->next();
+		if (lexer->look()->gettype() == TokenTypes::INCREMENT)
+		{
+			lexer->next();
+			instructions.push_back(Instruction(Opcodes::INC,
+				Argument(v->getstackslot()), Argument(v->isglobal()), 0));
+		}
+		else if (lexer->look()->gettype() == TokenTypes::DECREMENT)
+		{
+			lexer->next();
+			instructions.push_back(Instruction(Opcodes::DEC,
+				Argument(v->getstackslot()), Argument(v->isglobal()), 0));
+		}
+
+		if (outvar)
+			*outvar = v;
+		return v->gettype();
 	}
 
 	DataType Parser::factor(int stackSlot)
@@ -767,9 +815,9 @@ namespace cflat
 		case TokenTypes::ID:
 		{
 			char* ident = dynamic_cast<Identifier*>(lexer->look())->get();
-			lexer->next();
-			if (lexer->look()->gettype() == '(')
+			if (lexer->lookahead(1)->gettype() == '(')
 			{
+				lexer->next();
 				int retSlot = functionCall(ident);
 				instructions.push_back(Instruction(Opcodes::MW,
 					Argument(stackSlot),
@@ -777,30 +825,7 @@ namespace cflat
 				return getFunction(ident)->getType();
 			}
 			else
-			{
-				Variable* v = getVariable(ident);
-				if (v)
-				{
-					if (typesizes[v->gettype()] == 1)
-						instructions.push_back(Instruction(Opcodes::MB,
-							Argument(stackSlot),
-							Argument(v->getstackslot()),
-							Argument(v->isglobal())));
-					else if (typesizes[v->gettype()] == 2)
-						instructions.push_back(Instruction(Opcodes::MH,
-							Argument(stackSlot),
-							Argument(v->getstackslot()),
-							Argument(v->isglobal())));
-					else if (typesizes[v->gettype()] == 4)
-						instructions.push_back(Instruction(Opcodes::MW,
-							Argument(stackSlot),
-							Argument(v->getstackslot()),
-							Argument(v->isglobal())));
-				}
-				else
-					throw exceptions::UNDEFINED_SYMBOL;
-				return v->gettype();
-			}
+				return memexpr(stackSlot, NULL);
 		}
 		}
 		throw exceptions::UNDEFINED_SYMBOL;
@@ -1050,6 +1075,25 @@ namespace cflat
 			}
 		}
 		return varType;
+	}
+
+	void Parser::loadVarToStack(int stackSlot, Variable* v)
+	{
+		if (typesizes[v->gettype()] == 1)
+			instructions.push_back(Instruction(Opcodes::MB,
+				Argument(stackSlot),
+				Argument(v->getstackslot()),
+				Argument(v->isglobal())));
+		else if (typesizes[v->gettype()] == 2)
+			instructions.push_back(Instruction(Opcodes::MH,
+				Argument(stackSlot),
+				Argument(v->getstackslot()),
+				Argument(v->isglobal())));
+		else if (typesizes[v->gettype()] == 4)
+			instructions.push_back(Instruction(Opcodes::MW,
+				Argument(stackSlot),
+				Argument(v->getstackslot()),
+				Argument(v->isglobal())));
 	}
 
 	void Parser::removeAllNonGlobals()

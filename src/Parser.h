@@ -44,6 +44,7 @@ namespace cflat
 		DataType					mathexpr(int stackSlot);
 		DataType					mathterm(int stackSlot);
 		DataType					mathunary(int stackSlot);
+		DataType					memexpr(int stackSlot, Variable** outvar);
 		DataType					factor(int stackSlot);
 		DataType					generalizedTypecast(DataType t, DataType s, int tSlot, int sSlot);
 		void						forcedTypecast(DataType t, DataType s, int tSlot);
@@ -51,6 +52,7 @@ namespace cflat
 		DataType					globaldecl();
 		DataType					datatype();
 		int							functionCall(char* name);
+		void						loadVarToStack(int stackSlot, Variable* v);
 		void						removeAllNonGlobals();
 
 		Lexer*						lexer;

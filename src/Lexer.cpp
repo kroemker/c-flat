@@ -92,13 +92,31 @@ namespace cflat
 				return new Token('=');
 		case '!':
 			inputIndex++;
-			if (input[inputIndex] == '=')
+			if (!isready() && input[inputIndex] == '=')
 			{
 				inputIndex++;
 				return new Token(TokenTypes::UNEQUALS);
 			}
 			else
 				return new Token('!');
+		case '+':
+			inputIndex++;
+			if (!isready() && input[inputIndex] == '+')
+			{
+				inputIndex++;
+				return new Token(TokenTypes::INCREMENT);
+			}
+			else
+				return new Token('+');
+		case '-':
+			inputIndex++;
+			if (!isready() && input[inputIndex] == '-')
+			{
+				inputIndex++;
+				return new Token(TokenTypes::DECREMENT);
+			}
+			else
+				return new Token('-');
 		case '<':
 			inputIndex++;
 			if (input[inputIndex] == '=')

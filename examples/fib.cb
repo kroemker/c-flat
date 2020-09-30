@@ -14,7 +14,6 @@ main()
 
     while (i < input)
     {
-        print(fib(i));
-        i = i + 1;
+        print(fib(i++));
     }
 }

@@ -13,7 +13,7 @@
 #define STACK_INBOUNDS(n)	(((SP + (n)) / STACK_ENTRY_SIZE) < ((StackContext*)stack)->entries)
 
 #define ID_SIZE_LIMIT		64
-#define TOKENTYPES			10
+#define TOKENTYPES			12
 #define KEYWORDTYPES		512
 #define KEYWORDCOUNT		23
 
@@ -57,6 +57,8 @@ namespace cflat
 		EQUALS,
 		SHIFT_RIGHT,
 		SHIFT_LEFT,
+		INCREMENT,
+		DECREMENT,
 		ID,
 	};
 
@@ -142,6 +144,8 @@ namespace cflat
 		MULT,
 		DIV,
 		MOD,
+		INC,
+		DEC,
 		// float arithmetic
 		ADDF,
 		SUBF,
