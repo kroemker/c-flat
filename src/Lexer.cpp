@@ -16,7 +16,7 @@ namespace cflat
 		input = str;
 		inputLength = len;
 		Token* t;
-		while (!isready() && ((t = getnexttoken()) != NULL))
+		while (!isReady() && ((t = getNextToken()) != NULL))
 		{
 			t->setline(line);
 			tokens.push_back(t);
@@ -24,40 +24,133 @@ namespace cflat
 		prelexed = true;
 	}
 
-	Token* Lexer::getnexttoken()
+	int Lexer::getDigit(char c, bool allowHexDigits)
 	{
-		if (isready()) return NULL;
+		const int vdigits[] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,10,11,12,13,14,15 };
+		const char digits[] = "0123456789ABCDEFabcdef";
+		for (int i = 0; i < 10 + allowHexDigits * 12; i++)
+		{
+			if (c == digits[i])
+				return vdigits[i];
+		}
+		return -1;
+	}
+
+	Token* Lexer::parseNumber()
+	{
+		int base = 10;
+		int start;
+		bool isFloat = false;
+
+		union Number {
+			int i;
+			float f;
+		} number = { 0 };
+
+		// check base
+		if (input[inputIndex] == '0')
+		{
+			inputIndex++;
+			if (!isReady() && input[inputIndex] == 'b')
+			{
+				base = 2;
+				inputIndex++;
+			}
+			else if (!isReady() && input[inputIndex] == 'x')
+			{
+				base = 16;
+				inputIndex++;
+			}
+		}
+
+		start = inputIndex;
+		while (!isReady() && getDigit(input[inputIndex], base == 16) != -1)
+			inputIndex++;
+
+		// check for '.' and trailing 'f'
+		int dot = inputIndex;
+		if (!isReady() && input[inputIndex] == '.')
+		{
+			isFloat = true;
+			inputIndex++;
+			while (!isReady() && getDigit(input[inputIndex], base == 16) != -1)
+				inputIndex++;
+		}
+
+		if (!isReady() && input[inputIndex] == 'f')
+		{
+			isFloat = true;
+			inputIndex++;
+		}
+
+		// parse pre-dot digits
+		Number curbase; 
+		if (isFloat) curbase.f = 1; else curbase.i = 1;
+		for (int i = dot - 1; i >= start; i--)
+		{
+			if (isFloat)
+			{
+				number.f += curbase.f * (float)(getDigit(input[i], base == 16));
+				curbase.f *= base;
+			}
+			else
+			{
+				number.i += curbase.i * (float)(getDigit(input[i], base == 16));
+				curbase.i *= base;
+			}
+		}
+		
+		// parse post-dot digits
+		curbase.f = 1;
+		for (int i = dot + 1; i < inputIndex; i++)
+		{
+			if (input[i] == 'f') 
+				continue;
+
+			number.f += (1.0f / curbase.f) * (float)(getDigit(input[i], base == 16));
+			curbase.f *= base;
+		}
+
+		if (isFloat)
+			return new Float(number.f);
+		else
+			return new Integer(number.i);
+	}
+
+	Token* Lexer::getNextToken()
+	{
+		if (isReady()) return NULL;
 
 		char cCurrent = input[inputIndex];
 		if (cCurrent == ' ' || cCurrent == '\r' || cCurrent == '\t' || cCurrent == '\n')
 		{
 			if (cCurrent == '\n') line++;
 			inputIndex++;
-			return getnexttoken();
+			return getNextToken();
 		}
 
 		switch (cCurrent)
 		{
 		case '/':
 			inputIndex++;
-			if (!isready() && input[inputIndex] == '/')
+			if (!isReady() && input[inputIndex] == '/')
 			{
-				while (!isready() && input[inputIndex] != '\n')
+				while (!isReady() && input[inputIndex] != '\n')
 					inputIndex++;
 				line++;
 			}
-			else if (!isready() && input[inputIndex] == '*')
+			else if (!isReady() && input[inputIndex] == '*')
 			{
-				while (!isready())
+				while (!isReady())
 				{
 					inputIndex++;
-					if (!isready() && input[inputIndex] == '*')
+					if (!isReady() && input[inputIndex] == '*')
 					{
 						inputIndex++;
-						if (!isready() && input[inputIndex] == '/')
+						if (!isReady() && input[inputIndex] == '/')
 							break;
 					}
-					if (!isready() && input[inputIndex] == '\n')
+					if (!isReady() && input[inputIndex] == '\n')
 						line++;
 				}
 			}
@@ -67,12 +160,12 @@ namespace cflat
 				return new Token('/');
 			}
 			inputIndex++;
-			return getnexttoken();
+			return getNextToken();
 		case '\"':
 		{
 			inputIndex++;
 			Stringlit* slit = new Stringlit();
-			while (!isready() && input[inputIndex] != '\"')
+			while (!isReady() && input[inputIndex] != '\"')
 			{
 				if (input[inputIndex] == '\n') line++;
 				slit->append(input[inputIndex]);
@@ -83,7 +176,7 @@ namespace cflat
 		}
 		case '=':
 			inputIndex++;
-			if (!isready() && input[inputIndex] == '=')
+			if (!isReady() && input[inputIndex] == '=')
 			{
 				inputIndex++;
 				return new Token(TokenTypes::EQUALS);
@@ -92,7 +185,7 @@ namespace cflat
 				return new Token('=');
 		case '!':
 			inputIndex++;
-			if (!isready() && input[inputIndex] == '=')
+			if (!isReady() && input[inputIndex] == '=')
 			{
 				inputIndex++;
 				return new Token(TokenTypes::UNEQUALS);
@@ -101,7 +194,7 @@ namespace cflat
 				return new Token('!');
 		case '+':
 			inputIndex++;
-			if (!isready() && input[inputIndex] == '+')
+			if (!isReady() && input[inputIndex] == '+')
 			{
 				inputIndex++;
 				return new Token(TokenTypes::INCREMENT);
@@ -110,7 +203,7 @@ namespace cflat
 				return new Token('+');
 		case '-':
 			inputIndex++;
-			if (!isready() && input[inputIndex] == '-')
+			if (!isReady() && input[inputIndex] == '-')
 			{
 				inputIndex++;
 				return new Token(TokenTypes::DECREMENT);
@@ -147,11 +240,12 @@ namespace cflat
 				return new Token('>');
 			break;
 		}
+
 		if (isalpha(cCurrent) || cCurrent == '_')
 		{
 			Identifier* id = new Identifier(cCurrent);
 			inputIndex++;
-			while (!isready())
+			while (!isReady())
 				if (isalnum(input[inputIndex]) || input[inputIndex] == '_')
 					id->append(input[inputIndex++]);
 				else
@@ -161,33 +255,7 @@ namespace cflat
 		}
 		else if (isdigit(cCurrent))
 		{
-			int start = inputIndex;
-			bool isReal = false;
-			inputIndex++;
-			while (!isready())
-				if (isdigit(input[inputIndex]))
-					inputIndex++;
-				else
-					break;
-			if (!isready())
-				if (input[inputIndex] == '.')
-				{
-					isReal = true;
-					inputIndex++;
-					while (!isready())
-						if (isdigit(input[inputIndex]))
-							inputIndex++;
-						else
-							break;
-				}
-			char* buffer = new char[inputIndex - start + 1];
-			for (unsigned int i = 0; i < inputIndex - start; i++)
-				buffer[i] = input[start + i];
-			buffer[inputIndex - start] = '\0';
-			if (isReal)
-				return new Float(atof(buffer));
-			else
-				return new Integer(atoi(buffer));
+			return parseNumber();
 		}
 		else
 		{

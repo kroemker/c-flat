@@ -27,8 +27,10 @@ namespace cflat
 		bool	isEndOfTokenList() { return(tokens.size() == tokenIndex); }
 		bool	isPrelexed() { return prelexed; }
 	private:
-		bool				isready() { return inputIndex >= inputLength; }
-		Token*				getnexttoken();
+		bool				isReady() { return inputIndex >= inputLength; }
+		Token*				getNextToken();
+		Token*				parseNumber();
+		int					getDigit(char c, bool allowHexDigits);
 		std::vector<Token*>	tokens;
 		char*				input;
 		unsigned int		tokenIndex;
