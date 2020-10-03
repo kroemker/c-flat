@@ -9,6 +9,7 @@
 #include "function.h"
 #include "Lexer.h"
 #include "Parser.h"
+#include "Optimizer.h"
 
 using namespace cflat;
 
@@ -71,25 +72,30 @@ int cfParseFile(char* name)
     return 1;
 }
 
-int cfExecute(char* entryPoint)
+int cfOptimize()
+{
+	if (parser == NULL)
+		return 0;
+
+	Optimizer opt(parser);
+	opt.optimize();
+
+	return 1;
+}
+
+int cfExecute()
 {
     if (parser == NULL)
         return 0;
 
-    if (parser->setEntryPoint(entryPoint) == 0)
-    {
-        printf("Entry point '%s' not found...", entryPoint);
-        return 0;
-    }
-
     while(1)
     {
         assert(PC < parser->instructions.size());
-        Instruction instr = parser->instructions[PC];
+        Instruction* instr = &parser->instructions[PC];
         //printf("PC: %04d, SP: %04d, OPC:\t", PC, SP);
-        //instr.print();
-        instr.execute(stack);
-        if (instr.getOpcode() == Opcodes::Q)
+        //instr->print();
+        instr->execute(stack);
+        if (instr->getOpcode() == Opcodes::Q)
             break;
     };
 
@@ -152,11 +158,11 @@ int cfCallFunction(char* name, int nargs, ...)
     while (1)
     {
         assert(PC < parser->instructions.size());
-        Instruction instr = parser->instructions[PC];
+        Instruction* instr = &parser->instructions[PC];
         //printf("PC: %04d, SP: %04d, OPC:\t", PC, SP);
         //instr.print();
-        instr.execute(stack);
-        if (instr.getOpcode() == Opcodes::YLD)
+        instr->execute(stack);
+        if (instr->getOpcode() == Opcodes::YLD)
             break;
     };
 

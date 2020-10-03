@@ -10,7 +10,8 @@ void cfClose();
 void cfRegisterFunction(char* name, cfExternalFunctionPtr ptr);
 int cfInitStack(int size);
 int cfParseFile(char* name);
-int cfExecute(char* entryPoint);
+int cfOptimize();
+int cfExecute();
 int cfCallFunction(char* name, int nargs, ...);
 
 int cfGetReturnInteger();

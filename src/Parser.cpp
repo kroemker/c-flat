@@ -187,6 +187,9 @@ namespace cflat
 				PUSH(stackSlot);
 				assignexpr(stackSlot);
 				POP();
+				if (lexer->look()->gettype() != ';')
+					throw exceptions::SEMICOLON_EXPECTED;
+				lexer->next();
 			}
 		}
 	}

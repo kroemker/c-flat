@@ -47,7 +47,7 @@ While an example of executing C♭ scripts can be seen in the [interpreter sourc
 3. Parse the C♭ file to execute: `cfParseFile("filename")`
 4. Initialize the stack for execution: `cfInitStack(size)`
 5. Execute
-   - script by invoking a main function: `cfExecute("main")`
+   - script by invoking the main function: `cfExecute()`
    - function with arguments: `cfCallFunction("functionName", nargs, ...)`
 6. Retrieve the return value (only possible if invoking a function): `cfGetReturnInteger()` or `cfGetReturnFloat()`
 7. Close the C♭ environment: `cfClose()`

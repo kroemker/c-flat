@@ -19,6 +19,7 @@ int main(int argc, char* argv[])
 	char* error;
 	bool printInstrs = false;
 	bool printResult = false;
+	bool optimize = false;
 	char functionToCall[128] = { 0 };
 	int stackSize = 0x100000; // 1 MB
 
@@ -28,6 +29,8 @@ int main(int argc, char* argv[])
 			printInstrs = true;
 		else if (strcmp(argv[i], "-r") == 0)
 			printResult = true;
+		else if (strcmp(argv[i], "-o") == 0)
+			optimize = true;
 		else if (strcmp(argv[i], "-f") == 0)
 			strcpy(functionToCall, argv[++i]);
 		else if (strcmp(argv[i], "-s") == 0)
@@ -46,6 +49,9 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 
+			if (optimize)
+				cfOptimize();
+
 			if (printInstrs)
 				cfPrintInstructions();
 
@@ -58,7 +64,7 @@ int main(int argc, char* argv[])
 					printf("Result: %d\n", cfGetReturnInteger());
 			}
 			else
-				cfExecute("main");
+				cfExecute();
 
 		}
 		else
