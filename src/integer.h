@@ -12,9 +12,9 @@ class Integer : public Token
 public:
 	Integer(int v);
 	virtual ~Integer(void){};
-	void				setvalue(int v){value = v;}
-	int					getvalue(){return value;}
-	virtual const char* tostring();
+	void				setValue(int v){value = v;}
+	int					getValue(){return value;}
+	virtual const char* toString();
 private:
 	int value;
 };

@@ -7,7 +7,7 @@ namespace cflat
 	{
 	}
 
-	const char* Token::tostring()
+	const char* Token::toString()
 	{
 		if (type > 255)
 			return ttypes_s[type - 256];
@@ -20,4 +20,8 @@ namespace cflat
 		}
 	}
 
+	bool Token::isAssignToken()
+	{
+		return (type == '=') || (type >= TokenTypes::ASSIGN_ADD && type <= TokenTypes::ASSIGN_SHIFTR);
+	}
 }

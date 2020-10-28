@@ -11,10 +11,10 @@ namespace cflat
 	public:
 		Exception(int type, int exprn, Token* token);
 		virtual		~Exception(void) {};
-		int			gettype() { return type; }
+		int			getType() { return type; }
 		Token*		gettoken() { return token; }
 		int			getexprnum() { return exprnum; }
-		const char*	tostring() { return exceptions_s[type]; }
+		const char*	toString() { return exceptions_s[type]; }
 	private:
 		int type;
 		int exprnum;

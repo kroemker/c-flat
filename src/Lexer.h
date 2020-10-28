@@ -17,7 +17,7 @@ namespace cflat
 	public:
 		Lexer();
 		virtual ~Lexer(void);
-		void	next() { if (isEndOfTokenList()) return; if (tokens[tokenIndex]->gettype() == ';')numExpr++; tokenIndex++; }
+		void	next() { if (isEndOfTokenList()) return; if (tokens[tokenIndex]->getType() == ';')numExpr++; tokenIndex++; }
 		void	prelex(char* str, int len);
 		void	jump(int pos) { tokenIndex = pos; }
 		int		getExpressionCount() { return numExpr; }

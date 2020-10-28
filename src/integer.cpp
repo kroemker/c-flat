@@ -7,7 +7,7 @@ namespace cflat
 	{
 	}
 
-	const char* Integer::tostring()
+	const char* Integer::toString()
 	{
 		char* s = new char[16];
 		sprintf(s, "%d", value);

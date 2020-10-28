@@ -18,7 +18,7 @@ namespace cflat
 		Token* t;
 		while (!isReady() && ((t = getNextToken()) != NULL))
 		{
-			t->setline(line);
+			t->setLine(line);
 			tokens.push_back(t);
 		}
 		prelexed = true;
@@ -157,7 +157,13 @@ namespace cflat
 			else
 			{
 				inputIndex++;
-				return new Token('/');
+				if (!isReady() && input[inputIndex] == '=')
+				{
+					inputIndex++;
+					return new Token(TokenTypes::ASSIGN_DIV);
+				}
+				else
+					return new Token('/');
 			}
 			inputIndex++;
 			return getNextToken();
@@ -199,6 +205,11 @@ namespace cflat
 				inputIndex++;
 				return new Token(TokenTypes::INCREMENT);
 			}
+			else if (!isReady() && input[inputIndex] == '=')
+			{
+				inputIndex++;
+				return new Token(TokenTypes::ASSIGN_ADD);
+			}
 			else
 				return new Token('+');
 		case '-':
@@ -208,8 +219,58 @@ namespace cflat
 				inputIndex++;
 				return new Token(TokenTypes::DECREMENT);
 			}
+			else if (!isReady() && input[inputIndex] == '=')
+			{
+				inputIndex++;
+				return new Token(TokenTypes::ASSIGN_SUB);
+			}
 			else
 				return new Token('-');
+		case '*':
+			inputIndex++;
+			if (!isReady() && input[inputIndex] == '=')
+			{
+				inputIndex++;
+				return new Token(TokenTypes::ASSIGN_MUL);
+			}
+			else
+				return new Token('*');
+		case '%':
+			inputIndex++;
+			if (!isReady() && input[inputIndex] == '=')
+			{
+				inputIndex++;
+				return new Token(TokenTypes::ASSIGN_MOD);
+			}
+			else
+				return new Token('%');
+		case '|':
+			inputIndex++;
+			if (!isReady() && input[inputIndex] == '=')
+			{
+				inputIndex++;
+				return new Token(TokenTypes::ASSIGN_OR);
+			}
+			else
+				return new Token('|');
+		case '&':
+			inputIndex++;
+			if (!isReady() && input[inputIndex] == '=')
+			{
+				inputIndex++;
+				return new Token(TokenTypes::ASSIGN_AND);
+			}
+			else
+				return new Token('&');
+		case '^':
+			inputIndex++;
+			if (!isReady() && input[inputIndex] == '=')
+			{
+				inputIndex++;
+				return new Token(TokenTypes::ASSIGN_XOR);
+			}
+			else
+				return new Token('^');
 		case '<':
 			inputIndex++;
 			if (input[inputIndex] == '=')
@@ -220,7 +281,13 @@ namespace cflat
 			else if (input[inputIndex] == '<')
 			{
 				inputIndex++;
-				return new Token(TokenTypes::SHIFT_LEFT);
+				if (!isReady() && input[inputIndex] == '=')
+				{
+					inputIndex++;
+					return new Token(TokenTypes::ASSIGN_SHIFTL);
+				}
+				else
+					return new Token(TokenTypes::SHIFT_LEFT);
 			}
 			else
 				return new Token('<');
@@ -234,7 +301,13 @@ namespace cflat
 			else if (input[inputIndex] == '>')
 			{
 				inputIndex++;
-				return new Token(TokenTypes::SHIFT_RIGHT);
+				if (!isReady() && input[inputIndex] == '=')
+				{
+					inputIndex++;
+					return new Token(TokenTypes::ASSIGN_SHIFTR);
+				}
+				else
+					return new Token(TokenTypes::SHIFT_RIGHT);
 			}
 			else
 				return new Token('>');
@@ -250,7 +323,7 @@ namespace cflat
 					id->append(input[inputIndex++]);
 				else
 					break;
-			id->checkkeyword();
+			id->checkKeyword();
 			return id;
 		}
 		else if (isdigit(cCurrent))

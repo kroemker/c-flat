@@ -16,8 +16,8 @@ namespace cflat
 		virtual ~Identifier(void);
 		void				append(char n);
 		char*				get() { return buffer; }
-		void				checkkeyword();
-		virtual const char*	tostring() { return static_cast<const char*>(get()); }
+		void				checkKeyword();
+		virtual const char*	toString() { return static_cast<const char*>(get()); }
 	private:
 		char*	buffer;
 		int		position;

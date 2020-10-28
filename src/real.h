@@ -13,9 +13,9 @@ namespace cflat
 	public:
 		Float(float v);
 		virtual ~Float(void) {};
-		void				setvalue(float v) { value = v; }
-		float				getvalue() { return value; }
-		virtual const char*	tostring();
+		void				setValue(float v) { value = v; }
+		float				getValue() { return value; }
+		virtual const char*	toString();
 	private:
 		float value;
 	};

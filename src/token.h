@@ -11,11 +11,12 @@ namespace cflat
 	public:
 		Token(int t);
 		virtual ~Token(void) {};
-		void				settype(int t) { type = t; }
-		int					gettype() { return type; }
-		void				setline(int l) { line = l; }
-		int					getline() { return line; }
-		virtual const char*	tostring();
+		void				setType(int t) { type = t; }
+		int					getType() { return type; }
+		void				setLine(int l) { line = l; }
+		int					getLine() { return line; }
+		virtual const char*	toString();
+		bool				isAssignToken();
 	private:
 		int type;
 		int line;

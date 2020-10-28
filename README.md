@@ -12,13 +12,11 @@ C♭ code is compiled into byte code instructions that operate solely on the sta
 
 The following C♭ function computes the n-th fibonacci number (see [examples](examples/)):
 ```
-function fib(int n)
+fib(n)
 {
-    if (n <= 0) 
-        return 0;
-    else if (n == 1) 
-        return 1;
-    else 
+    if n <= 1
+        return n;
+    else
         return fib(n-1) + fib(n-2);
 }
 ```

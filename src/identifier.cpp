@@ -26,13 +26,13 @@ namespace cflat
 		position++;
 	}
 
-	void Identifier::checkkeyword()
+	void Identifier::checkKeyword()
 	{
 		int i;
 		for (i = 0; i < KEYWORDCOUNT; i++)
 			if (strcmp(static_cast<const char*> (this->get()), static_cast<const char*>(keywords_s[i])) == 0)
 			{
-				this->settype(KEYWORDTYPES + i);
+				this->setType(KEYWORDTYPES + i);
 				break;
 			}
 	}

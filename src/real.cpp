@@ -8,7 +8,7 @@ namespace cflat
 		value = v;
 	}
 
-	const char* Float::tostring()
+	const char* Float::toString()
 	{
 		char* s = new char[16];
 		sprintf(s, "%f", value);
