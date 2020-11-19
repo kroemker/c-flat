@@ -5,8 +5,8 @@
 
 #include "cflat.h"
 
-#include "symbols.h"
-#include "function.h"
+#include "Symbols.h"
+#include "Function.h"
 #include "Lexer.h"
 #include "Parser.h"
 #include "Optimizer.h"

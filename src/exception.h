@@ -1,7 +1,7 @@
 #pragma once
 
-#include "symbols.h"
-#include "token.h"
+#include "Symbols.h"
+#include "Token.h"
 
 namespace cflat
 {

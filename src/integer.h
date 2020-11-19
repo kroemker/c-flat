@@ -1,8 +1,9 @@
 #pragma once
 
-#include "token.h"
 #include <cstdlib>
 #include <cstdio>
+
+#include "Token.h"
 
 namespace cflat
 {

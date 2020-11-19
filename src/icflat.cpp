@@ -1,8 +1,8 @@
-
 #include <cstdio>
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
+
 #include "cflat.h"
 
 void cfPrint(cfStack stack)

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "symbols.h"
 #include <cstdlib>
+
+#include "Symbols.h"
 
 namespace cflat
 {

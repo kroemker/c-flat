@@ -1,6 +1,6 @@
 #pragma once
 
-#include "symbols.h"
+#include "Symbols.h"
 
 namespace cflat
 {

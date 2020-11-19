@@ -1,9 +1,9 @@
-#include "stringlit.h"
+#include "StringLiteral.h"
 
 namespace cflat
 {
 
-	Stringlit::Stringlit(void) : Token(TokenTypes::STRING)
+	StringLiteral::StringLiteral(void) : Token(TokenTypes::STRING)
 	{
 		position = 0;
 		buffer = NULL;
@@ -11,12 +11,12 @@ namespace cflat
 		buffer[0] = '\0';
 	}
 
-	Stringlit::~Stringlit(void)
+	StringLiteral::~StringLiteral(void)
 	{
 		SAFEDEL(buffer);
 	}
 
-	void Stringlit::append(char n)
+	void StringLiteral::append(char n)
 	{
 		buffer[position] = n;
 		buffer[position + 1] = '\0';

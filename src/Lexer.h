@@ -3,11 +3,12 @@
 #include <string>
 #include <iostream>
 #include <vector>
-#include "token.h"
-#include "real.h"
-#include "identifier.h"
-#include "integer.h"
-#include "stringlit.h"
+
+#include "Token.h"
+#include "Float.h"
+#include "Identifier.h"
+#include "Integer.h"
+#include "StringLiteral.h"
 
 namespace cflat
 {

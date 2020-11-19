@@ -1,16 +1,16 @@
 #pragma once
 
-#include "token.h"
-#include "symbols.h"
+#include "Token.h"
+#include "Symbols.h"
 
 namespace cflat
 {
 
-	class Stringlit : public Token
+	class StringLiteral : public Token
 	{
 	public:
-		Stringlit(void);
-		virtual ~Stringlit(void);
+		StringLiteral(void);
+		virtual ~StringLiteral(void);
 		void				append(char n);
 		char*				get() { return buffer; }
 		virtual const char*	toString() { return (const char*)get(); }

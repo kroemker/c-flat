@@ -1,7 +1,7 @@
-#include "Instruction.h"
-
 #include <iostream>
 #include <cassert>
+
+#include "Instruction.h"
 
 #define ASSERT_ARG_IN_BOUNDS(arg)	assert(STACK_INBOUNDS(a ## arg.i))
 

@@ -1,4 +1,4 @@
-#include "integer.h"
+#include "Integer.h"
 
 namespace cflat
 {

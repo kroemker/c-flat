@@ -170,7 +170,7 @@ namespace cflat
 		case '\"':
 		{
 			inputIndex++;
-			Stringlit* slit = new Stringlit();
+			StringLiteral* slit = new StringLiteral();
 			while (!isReady() && input[inputIndex] != '\"')
 			{
 				if (input[inputIndex] == '\n') line++;

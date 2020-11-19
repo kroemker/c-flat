@@ -2,7 +2,7 @@ LIB_NAME=cflat
 
 CXX=g++
 CXXFLAGS=-std=c++0x -I.
-OBJ= cflat.o exception.o function.o identifier.o Instruction.o integer.o Lexer.o Parser.o real.o stringlit.o symbols.o token.o variable.o
+OBJ= cflat.o Exception.o Function.o Identifier.o Instruction.o Integer.o Lexer.o Parser.o Optimizer.o Float.o StringLiteral.o Symbols.o Token.o Variable.o
 
 AR= ar rcu
 RM= rm -f
@@ -25,18 +25,19 @@ $(CFLATEXE_WIN) $(CFLATEXE_LINUX): icflat.o
 clean:
 	$(RM) icflat.o $(OBJ) $(CFLATLIB_WIN) $(CFLATLIB_LINUX) $(CFLATEXE_WIN) $(CFLATEXE_LINUX)
 
-exception.o: exception.cpp exception.h symbols.h token.h
-function.o: function.cpp function.h symbols.h
-identifier.o: identifier.cpp symbols.h token.h identifier.h
-Instruction.o: Instruction.cpp Instruction.h symbols.h
-integer.o: integer.cpp integer.h token.h
-Lexer.o: Lexer.cpp Lexer.h token.h real.h identifier.h integer.h stringlit.h
-Parser.o: Parser.cpp Parser.h Instruction.h symbols.h Lexer.h function.h variable.h token.h exception.h
-real.o: real.cpp real.h symbols.h token.h
-stringlit.o: stringlit.cpp stringlit.h
-symbols.o: symbols.h
-token.o: token.cpp token.h symbols.h
-variable.o: variable.cpp variable.h symbols.h
-cflat.o: cflat.cpp cflat.h symbols.h function.h Lexer.h Parser.h Instruction.h
+Exception.o: Exception.cpp Exception.h Symbols.h Token.h
+Function.o: Function.cpp Function.h Symbols.h
+Identifier.o: Identifier.cpp Symbols.h Token.h Identifier.h
+Instruction.o: Instruction.cpp Instruction.h Symbols.h
+Integer.o: Integer.cpp Integer.h Token.h
+Lexer.o: Lexer.cpp Lexer.h Token.h Float.h Identifier.h Integer.h StringLiteral.h
+Parser.o: Parser.cpp Parser.h Instruction.h Symbols.h Lexer.h Function.h Variable.h Token.h Exception.h
+Optimizer.o: Optimizer.cpp Optimizer.h Parser.h
+Float.o: Float.cpp Float.h Symbols.h Token.h
+StringLiteral.o: StringLiteral.cpp StringLiteral.h
+Symbols.o: Symbols.h
+Token.o: Token.cpp Token.h Symbols.h
+Variable.o: Variable.cpp Variable.h Symbols.h
+cflat.o: cflat.cpp cflat.h Symbols.h Function.h Lexer.h Parser.h Instruction.h
 
 icflat.o: icflat.cpp cflat.h

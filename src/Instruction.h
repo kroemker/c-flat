@@ -1,7 +1,8 @@
 #pragma once
 
 #include <cstring>
-#include "symbols.h"
+
+#include "Symbols.h"
 
 namespace cflat
 {

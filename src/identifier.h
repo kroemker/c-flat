@@ -1,10 +1,11 @@
 #pragma once
 
-#include "token.h"
-#include "symbols.h"
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+
+#include "Token.h"
+#include "Symbols.h"
 
 namespace cflat
 {

@@ -2,13 +2,14 @@
 
 #include <map>
 #include <list>
+
 #include "Instruction.h"
-#include "symbols.h"
+#include "Symbols.h"
 #include "Lexer.h"
-#include "function.h"
-#include "variable.h"
-#include "token.h"
-#include "exception.h"
+#include "Function.h"
+#include "Variable.h"
+#include "Token.h"
+#include "Exception.h"
 
 namespace cflat
 {
